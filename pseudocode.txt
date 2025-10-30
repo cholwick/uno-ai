@@ -1,0 +1,58 @@
+BEGIN PROGRAMMA
+
+TOON "Welkom bij UNO!"
+
+// --- STARTFASE ---
+VRAAG "Hoeveel spelers zijn er?"
+LEES aantal_spelers
+
+MAAK een profiel aan voor elke speler
+SCHUD de kaarten
+ZET spelrichting = met de klok mee
+
+VOOR elke speler IN spelers:
+    GEEF 7 kaarten aan speler
+EINDE VOOR
+
+ZET één kaart met de afbeelding naar boven op de stapel (aflegstapel)
+
+ronde_nummer = 1
+spel_bezig = WAAR
+
+// --- MAIN LOOP ---
+WHILE spel_bezig = WAAR
+    TOON "Ronde", ronde_nummer
+    huidige_speler = volgende_speler(spelrichting)
+
+    // --- BEURT VAN SPELER ---
+    ALS huidige_speler een speelbare_kaart(top_aflegkaart) heeft DAN
+        gekozen_kaart = KIES een speelbare kaart
+        LEG gekozen_kaart op de aflegstapel
+        TOON "Speler speelt:", gekozen_kaart
+        
+        PAS_kaarteffect_toe(gekozen_kaart)
+        
+        ALS huidige_speler nog 1 kaart heeft DAN
+            TOON "UNO!"
+        EINDE ALS
+        
+        ALS huidige_speler GEEN kaarten meer heeft DAN
+            TOON huidige_speler.naam + " heeft gewonnen!"
+            spel_bezig = ONWAAR
+        EINDE ALS
+        
+    ANDERS
+        TREK 1 kaart van de trekstapel en VOEG toe aan de hand van huidige_speler
+        TOON huidige_speler.naam + " trekt een kaart"
+    EINDE ALS
+
+    // --- EINDE BEURT ---
+    ALS trekstapel LEEG is DAN
+        SCHUD aflegstapel (behalve bovenste kaart) tot nieuwe trekstapel
+    EINDE ALS
+
+    ZET volgende_speler(spelrichting)
+    ronde_nummer = ronde_nummer + 1
+EINDE WHILE
+
+EIND PROGRAMMA
