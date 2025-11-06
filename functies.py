@@ -22,27 +22,7 @@ def toon_welkom_scherm(screen):
 
 
 def einde_scherm(screen, winnaar):
-    init()
-    screen = display.set_mode((400, 300))
-    display.set_caption("Einde van het Spel")
-
-    font = font.SysFont(None, 48)
-    text = font.render(f"{winnaar} heeft gewonnen!", True, (255, 255, 255))
-    text_rect = text.get_rect(center=(200, 150))
-
-    running = True
-    while running:
-        for evt in event.get():
-            if evt.type == QUIT:
-                running = False
-            elif evt.type == KEYDOWN:
-                running = False
-
-        screen.fill((0, 0, 0))
-        screen.blit(text, text_rect)
-        display.flip()
-
-    quit()
+    pass
 
 def deck_aanmaken():
     deck = []
@@ -184,6 +164,9 @@ def pas_kaart_effect_toe(screen, kaart, richting, huidige_index, spelers_volgord
                 spelers_handen[slachtoffer].append(deck.pop())
         volgende_index = (huidige_index + 2 * richting) % len(spelers_volgorde)
 
+    if nieuwe_kleur == "zwart":
+        nieuwe_kleur = kleur  # voorkom dat de kleur zwart blijft
+
     return richting, volgende_index, nieuwe_kleur
 
 def kies_kleur(screen, oude_kleur):
@@ -197,12 +180,13 @@ def kies_kleur(screen, oude_kleur):
     gekozen_kleur = None
     font_titel = FONT_TITLE
     font_knop = FONT_BUTTON
+    klok = time.Clock()  # frame limiter
 
     while gekozen_kleur is None:
         # achtergrond
         screen.fill(WHITE)
-
         toon_huidige_kleur(screen, oude_kleur)
+        
 
         titel = font_titel.render("Kies een kleur:", True, BLACK)
         screen.blit(titel, (WIDTH // 2 - titel.get_width() // 2, HEIGHT // 5))
@@ -230,15 +214,21 @@ def kies_kleur(screen, oude_kleur):
 
         display.flip()
 
+        # events afhandelen
         for evt in event.get():
             if evt.type == QUIT:
-                return
+                quit()
+                raise SystemExit
             elif evt.type == MOUSEBUTTONDOWN and evt.button == 1:
                 for i, (kleur_naam, kleur_rgb) in enumerate(kleuren):
                     rect = Rect(start_x + i * (knop_breedte + ruimte), y_pos, knop_breedte, knop_hoogte)
                     if rect.collidepoint(evt.pos):
                         gekozen_kleur = kleur_naam
+
+        klok.tick(30)  # 30 FPS om CPU te sparen
+
     return gekozen_kleur
+
 
 def toon_huidige_kleur(screen, huidige_kleur):
     kleur_rgb = {
@@ -252,3 +242,60 @@ def toon_huidige_kleur(screen, huidige_kleur):
     screen.blit(label, (WIDTH - 280, 20))
 
     draw.circle(screen, kleur_rgb, (WIDTH - 120, 90), 30)
+
+def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, melding=None, scroll_offset=0):
+    screen.fill(WHITE)
+
+    # titel
+    font = FONT_TITLE
+    text = font.render(f"{speler} is aan de beurt", True, BLACK)
+    screen.blit(text, (WIDTH // 2 - text.get_width() // 2, 20))
+
+    # bovenste kaart
+    kaart_font = FONT_BUTTON
+    bovenste_kaart_text = kaart_font.render(f"Bovenste kaart: {bovenste_kaart}", True, BLACK)
+    screen.blit(bovenste_kaart_text, (WIDTH // 2 - bovenste_kaart_text.get_width() // 2, 80))
+
+    # huidige kleur
+    kleur_vlak = Rect(WIDTH // 2 - 75, 140, 150, 50)
+    kleur_map = {
+        "rood": RED,
+        "geel": YELLOW,
+        "groen": GREEN,
+        "blauw": BLUE
+        }
+    draw.rect(screen, kleur_map.get(huidige_kleur, BLACK), kleur_vlak)
+    kleur_text = kaart_font.render(f"Huidige kleur: {huidige_kleur}", True, BLACK)
+    screen.blit(kleur_text, (WIDTH // 2 - kleur_text.get_width() // 2, 150))
+
+    # hand van de speler
+    x = 50
+    y = HEIGHT - 150
+    spacing = 110
+    kaart_breedte = 100
+
+    for i, kaart in enumerate(hand):
+        kaart_kleur = kleur_map.get(kaart[0], (230, 230, 230))  # fallback grijs
+        kaart_rect = Rect(x + i * spacing, y, kaart_breedte, 140)
+        draw.rect(screen, kaart_kleur, kaart_rect, border_radius=8)  # achtergrond in kaartkleur
+
+        # teken waarde
+        kaart_text = kaart_font.render(str(kaart[1]), True, BLACK)
+        text_x = kaart_rect.x + (kaart_rect.width - kaart_text.get_width()) // 2
+        text_y = kaart_rect.y + (kaart_rect.height - kaart_text.get_height()) // 2
+        screen.blit(kaart_text, (text_x, text_y))
+
+    # eventuele melding
+    if melding:
+        melding_text = kaart_font.render(melding, True, RED)
+        screen.blit(melding_text, (WIDTH // 2 - melding_text.get_width() // 2, HEIGHT // 2))
+    display.flip()
+
+    # scrollen met pijlen
+    pijltje_font = FONT_BUTTON
+    if len(hand) * spacing > WIDTH :
+        left_pijl = pijltje_font.render("<", True, BLACK)
+        right_pijl = pijltje_font.render(">", True, BLACK)
+        screen.blit(left_pijl, (20, HEIGHT - 100))
+        screen.blit(right_pijl, (WIDTH - 50, HEIGHT - 100))
+    display.flip()
