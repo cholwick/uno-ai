@@ -220,7 +220,7 @@ def kies_kleur(screen, oude_kleur):
             tekst = font_knop.render(kleur_naam.capitalize(), True, BLACK)
             screen.blit(tekst, (rect.centerx - tekst.get_width() // 2, rect.centery - tekst.get_height() // 2))
 
-        display.flip()
+        
 
         # events afhandelen
         for evt in event.get():
@@ -232,6 +232,8 @@ def kies_kleur(screen, oude_kleur):
                     rect = Rect(start_x + i * (knop_breedte + ruimte), y_pos, knop_breedte, knop_hoogte)
                     if rect.collidepoint(evt.pos):
                         gekozen_kleur = kleur_naam
+                        
+        display.flip()
 
         klok.tick(30)  # 30 FPS om CPU te sparen
 
@@ -278,14 +280,23 @@ def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, meldin
     screen.blit(kleur_text, (WIDTH // 2 - kleur_text.get_width() // 2, 150))
 
     # hand van de speler
+    max_zichtbare_kaarten = 7
     x = 50
     y = HEIGHT - 150
     spacing = 110
     kaart_breedte = 100
 
-    for i, kaart in enumerate(hand):
+    # berekening van startindex op basis van scroll_offset
+    start_index = max(0, -scroll_offset // spacing)
+    eind_index = min(len(hand), start_index + max_zichtbare_kaarten)
+
+    zichtbare_kaarten = hand[start_index:eind_index]
+
+    base_x = (WIDTH - (len(zichtbare_kaarten) * spacing - 10)) // 2
+
+    for i, kaart in enumerate(zichtbare_kaarten):
         kaart_kleur = kleur_map.get(kaart[0], (230, 230, 230))  # fallback grijs
-        kaart_rect = Rect(x + i * spacing, y, kaart_breedte, 140)
+        kaart_rect = Rect(base_x + i * spacing, y, kaart_breedte, 140)
         draw.rect(screen, kaart_kleur, kaart_rect, border_radius=8)  # achtergrond in kaartkleur
 
         # teken waarde
@@ -298,7 +309,7 @@ def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, meldin
     if melding:
         melding_text = kaart_font.render(melding, True, RED)
         screen.blit(melding_text, (WIDTH // 2 - melding_text.get_width() // 2, HEIGHT // 2))
-    display.flip()
+    
 
     # scrollen met pijlen
     pijltje_font = FONT_BUTTON
@@ -307,4 +318,15 @@ def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, meldin
         right_pijl = pijltje_font.render(">", True, BLACK)
         screen.blit(left_pijl, (20, HEIGHT - 100))
         screen.blit(right_pijl, (WIDTH - 50, HEIGHT - 100))
+    
+
+    # trek een kaart
+    knop_font = FONT_BUTTON
+    knop_text = knop_font.render("Trek een kaart", True, BLACK)
+    knop_rect = Rect(WIDTH // 2 - 100, HEIGHT - 300, 200, 60)
+    draw.rect(screen, GREY, knop_rect, border_radius=8)
+    screen.blit(knop_text, (knop_rect.centerx  - knop_text.get_width()// 2,
+                            knop_rect.centery  - knop_text.get_height() // 2))
+    
+    # altijd aan het einde!!!!!
     display.flip()

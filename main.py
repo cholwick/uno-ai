@@ -64,17 +64,41 @@ while True:
                 start_x = 100
                 y_kaart = HEIGHT - 150
                 spacing = 110
-                for i, kaart in enumerate(hand):
-                    kaart_rect = Rect(start_x + i * spacing, y_kaart, 100, 130)
+
+                # controleer op klikkenvan trek kaart knop
+                trek_knop_rect = Rect(WIDTH // 2 - 100, HEIGHT - 300, 200, 60)
+                if trek_knop_rect.collidepoint(x, y):
+                    if deck:
+                        getrokken = deck.pop()
+                        hand.append(getrokken)
+                    huidige_index = (huidige_index + richting) % len(spelers_volgorde)
+                    break
+
+            elif evt.type == MOUSEBUTTONUP and evt.button == 1:
+                x, y = evt.pos
+                spacing = 110
+                kaart_braadte = 100
+                y_kaart = HEIGHT - 150
+                max_zichtbare_kaarten = 7
+
+                start_index = max(0, - scroll_offset // spacing)
+                end_index = min(len(hand), start_index + max_zichtbare_kaarten)
+                zichtbare_kaarten = hand[start_index:end_index]
+
+                base_x = (WIDTH - (len(zichtbare_kaarten) * spacing - 10)) // 2
+
+                for i,kaart in enumerate(zichtbare_kaarten):
+                    kaart_rect = Rect(base_x + i * spacing, y_kaart, kaart_braadte, 150)
                     if kaart_rect.collidepoint(x, y):
-                        if kaart_is_speelbaar(kaart, bovenste_kaart, huidige_kleur):
-                            gekozen = kaart
-                            break  # stop de loop zodra een kaart is gekozen
-                        else:
-                            toon_spel_status(
-                                screen, speler, hand, bovenste_kaart, huidige_kleur,
-                                             melding="Die kaart kun je niet spelen!"
-                                             )
+                        echte_index = start_index + i
+                        gekozen_kaart = hand[echte_index]
+                        if kaart_is_speelbaar(gekozen_kaart, bovenste_kaart, huidige_kleur):
+                            gekozen = gekozen_kaart
+                            break
+                    else:
+                        toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur,
+                                         melding="Die kaart kun jij niet spelen", scroll_offset=scroll_offset)
+
         max_offset = max(0, len(hand) * 110 - (WIDTH - 200))
         scroll_offset = max(-max_offset, min(0, scroll_offset))
 
