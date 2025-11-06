@@ -42,6 +42,7 @@ while True:
     gekozen = None  # reset gekozen kaart voor deze beurt
 
     while gekozen is None:
+        scroll_offset = 0  # reset scroll offset aan het begin van elke beurt
         toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, scroll_offset=scroll_offset)
 
         for evt in event.get():

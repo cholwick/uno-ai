@@ -24,6 +24,7 @@ def toon_welkom_scherm(screen):
 def einde_scherm(screen, winnaar):
     pass
 
+
 def deck_aanmaken():
     deck = []
     for kleur in KLEUREN:
@@ -39,6 +40,7 @@ def deck_aanmaken():
     print("Deck aangemaakt met", len(deck), "kaarten.")
     return deck
 
+
 def deel_kaarten_uit(deck, spelers_namen):
     spelers_handen = {
 
@@ -50,6 +52,7 @@ def deel_kaarten_uit(deck, spelers_namen):
         spelers_handen[naam] = hand
     return spelers_handen, deck
 
+
 def start_aflegstapel(deck):
     top_kaart = deck.pop()
     while top_kaart[0] == "zwart":  
@@ -57,6 +60,7 @@ def start_aflegstapel(deck):
         top_kaart = deck.pop()
     aflegstapel = [top_kaart]
     return aflegstapel, deck
+
 
 def vraag_speler_profielen(screen, aantal_spelers):
     event.clear()
@@ -89,6 +93,7 @@ def vraag_speler_profielen(screen, aantal_spelers):
 
     return namen 
 
+
 def vraag_aantal_spelers(screen):
 
     aantal_text = ''
@@ -116,6 +121,7 @@ def vraag_aantal_spelers(screen):
         screen.blit(hint, (WIDTH//2 - hint.get_width()//2, HEIGHT//2 + 60))
         display.flip()
 
+
 def kaart_is_speelbaar(kaart, bovenste_kaart, huidige_kleur):
     kleur, waarde = kaart
     top_kleur, top_waarde = bovenste_kaart
@@ -125,6 +131,7 @@ def kaart_is_speelbaar(kaart, bovenste_kaart, huidige_kleur):
             waarde == top_waarde or
             kleur == "zwart"
             )
+
 
 def pas_kaart_effect_toe(screen, kaart, richting, huidige_index, spelers_volgorde, spelers_handen, deck):
     kleur, waarde = kaart
@@ -168,6 +175,7 @@ def pas_kaart_effect_toe(screen, kaart, richting, huidige_index, spelers_volgord
         nieuwe_kleur = kleur  # voorkom dat de kleur zwart blijft
 
     return richting, volgende_index, nieuwe_kleur
+
 
 def kies_kleur(screen, oude_kleur):
     kleuren = [
@@ -242,6 +250,7 @@ def toon_huidige_kleur(screen, huidige_kleur):
     screen.blit(label, (WIDTH - 280, 20))
 
     draw.circle(screen, kleur_rgb, (WIDTH - 120, 90), 30)
+
 
 def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, melding=None, scroll_offset=0):
     screen.fill(WHITE)
