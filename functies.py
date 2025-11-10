@@ -1,6 +1,7 @@
 from pygame import *
 from data import *
 from random import shuffle
+from sys import exit
 
 # game of uno
 # give the functions to main.py
@@ -16,13 +17,30 @@ def toon_welkom_scherm(screen):
 
         for evt in event.get():
             if evt.type == QUIT:
-                quit()
-            elif evt.type == KEYDOWN:
-                return    
+                exit()
+            if evt.type == KEYDOWN:
+                if evt.key == K_ESCAPE:
+                    quit()
+                    exit()
+                else:
+                    return    
 
 
 def einde_scherm(screen, winnaar):
-    pass
+    screen.fill(WHITE)
+    draw_button(screen, Rect(WIDTH // 2 - 150, HEIGHT // 2 - 50, 300, 100), f"{winnaar} wint!", FONT_TITLE, YELLOW, BLACK)
+
+    draw_button(screen, Rect(WIDTH // 2 - 100, HEIGHT // 2 + 100, 200, 60), "klik esc", FONT_BUTTON, GREY, BLACK)
+
+    # wacht op afsluiten
+    while True:
+        for evt in event.get():
+            if evt.type == QUIT:
+                exit()
+            if evt.type == KEYDOWN:
+                if evt.key == K_ESCAPE:
+                    quit()
+                    exit()
 
 
 def deck_aanmaken():
@@ -71,9 +89,12 @@ def vraag_speler_profielen(screen, aantal_spelers):
     while huidige_speler <= aantal_spelers:
         for evt in event.get():
             if evt.type == QUIT:
-                quit()
+                exit()
             if evt.type == KEYDOWN:
-                if evt.key == K_RETURN:
+                if evt.key == K_ESCAPE:
+                    quit()
+                    exit()
+                elif evt.key == K_RETURN:
                     if input_text.strip() != '':
                         namen.append(input_text.strip())
                         input_text = ''
@@ -101,9 +122,12 @@ def vraag_aantal_spelers(screen):
     while True:
         for evt in event.get():
             if evt.type == QUIT:
-                quit()
+                exit()
             if evt.type == KEYDOWN:
-                if evt.key == K_RETURN:
+                if evt.key == K_ESCAPE:
+                    quit()
+                    exit()
+                elif evt.key == K_RETURN:
                     if aantal_text.isdigit() and 2 <= int(aantal_text) <= 10:
                         return int(aantal_text)
                 elif evt.key == K_BACKSPACE:
@@ -135,15 +159,17 @@ def kaart_is_speelbaar(kaart, bovenste_kaart, huidige_kleur):
 
 def pas_kaart_effect_toe(screen, kaart, richting, huidige_index, spelers_volgorde, spelers_handen, deck):
     kleur, waarde = kaart
+    volgende_speler = (huidige_index + richting) % len(spelers_volgorde)
 
-    volgende_index = (huidige_index + richting ) % len(spelers_volgorde)
+    volgende_index = (volgende_speler)
     nieuwe_kleur = kleur
 
     if waarde == "reverse":
-        richting *= -1
-        #bij 2 spelers werkt reverse als skip
         if len(spelers_volgorde) == 2:
-            volgende_index = (huidige_index + richting ) % len(spelers_volgorde)
+            # bij 2 spelers werkt reverse als skip
+            volgende_index = (huidige_index + 2 * richting) % len(spelers_volgorde)
+        else:
+            richting *= -1  # verander de speelrichting
 
     elif waarde == "skip":
         # sla een speler over
@@ -225,8 +251,12 @@ def kies_kleur(screen, oude_kleur):
         # events afhandelen
         for evt in event.get():
             if evt.type == QUIT:
-                quit()
+                exit()
                 raise SystemExit
+            if evt.type == KEYDOWN:
+                if evt.key == K_ESCAPE:
+                    quit()
+                    exit()
             elif evt.type == MOUSEBUTTONDOWN and evt.button == 1:
                 for i, (kleur_naam, kleur_rgb) in enumerate(kleuren):
                     rect = Rect(start_x + i * (knop_breedte + ruimte), y_pos, knop_breedte, knop_hoogte)
@@ -254,7 +284,7 @@ def toon_huidige_kleur(screen, huidige_kleur):
     draw.circle(screen, kleur_rgb, (WIDTH - 120, 90), 30)
 
 
-def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, melding=None, scroll_offset=0):
+def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, melding=None, melding_timer=0, scroll_offset=0):
     screen.fill(WHITE)
 
     # titel
@@ -285,8 +315,9 @@ def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, meldin
     y = HEIGHT - 150
     spacing = 110
     kaart_breedte = 100
+    kaart_hoogte = 150
 
-    # berekening van startindex op basis van scroll_offset
+    # berekening van startindex op basis van scroll_offset (scroll gebruikt als page index)
     start_index = max(0, -scroll_offset // spacing)
     eind_index = min(len(hand), start_index + max_zichtbare_kaarten)
 
@@ -294,39 +325,70 @@ def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, meldin
 
     base_x = (WIDTH - (len(zichtbare_kaarten) * spacing - 10)) // 2
 
-    for i, kaart in enumerate(zichtbare_kaarten):
-        kaart_kleur = kleur_map.get(kaart[0], (230, 230, 230))  # fallback grijs
-        kaart_rect = Rect(base_x + i * spacing, y, kaart_breedte, 140)
-        draw.rect(screen, kaart_kleur, kaart_rect, border_radius=8)  # achtergrond in kaartkleur
+    # muispositie voor hover-detectie
+    muis_pos = mouse.get_pos()
 
+    # teken eerst niet-hovered kaarten, bewaar hovered kaart om later bovenop te tekenen
+    hovered = None
+    for i, kaart in enumerate(hand):
+        kaart_kleur = kleur_map.get(kaart[0], (230, 230, 230))  # fallback grijs
+        rect_x = base_x + i * spacing
+        kaart_rect = Rect(rect_x + scroll_offset, y, kaart_breedte, kaart_hoogte)
+
+        if kaart_rect.collidepoint(muis_pos):
+            # bewaar hovered kaart om later bovenop te tekenen
+            hovered = (i, kaart, kaart_rect, kaart_kleur)
+            continue
+
+        # teken normale kaart
+        draw.rect(screen, kaart_kleur, kaart_rect, border_radius=8)
         # teken waarde
         kaart_text = kaart_font.render(str(kaart[1]), True, BLACK)
         text_x = kaart_rect.x + (kaart_rect.width - kaart_text.get_width()) // 2
         text_y = kaart_rect.y + (kaart_rect.height - kaart_text.get_height()) // 2
         screen.blit(kaart_text, (text_x, text_y))
 
-    # eventuele melding
-    if melding:
-        melding_text = kaart_font.render(melding, True, RED)
-        screen.blit(melding_text, (WIDTH // 2 - melding_text.get_width() // 2, HEIGHT // 2))
-    
-
-    # scrollen met pijlen
-    pijltje_font = FONT_BUTTON
-    if len(hand) * spacing > WIDTH :
-        left_pijl = pijltje_font.render("<", True, BLACK)
-        right_pijl = pijltje_font.render(">", True, BLACK)
-        screen.blit(left_pijl, (20, HEIGHT - 100))
-        screen.blit(right_pijl, (WIDTH - 50, HEIGHT - 100))
+    # teken hovered kaart als die er is, iets groter en iets omhoog geplaatst
+    if hovered is not None:
+        i, kaart, kaart_rect, kaart_kleur = hovered
+        scale = 1.25
+        new_w = int(kaart_rect.width * scale)
+        new_h = int(kaart_rect.height * scale)
+        new_x = kaart_rect.x - (new_w - kaart_rect.width) // 2
+        new_y = kaart_rect.y - (new_h - kaart_rect.height) - 20
+        enlarged_rect = Rect(new_x, new_y, new_w, new_h)
+        # achtergrond en border
+        draw.rect(screen, kaart_kleur, enlarged_rect, border_radius=10)
+        draw.rect(screen, BLACK, enlarged_rect, 2, border_radius=10)
+        # teken waarde gecentreerd
+        kaart_text = kaart_font.render(str(kaart[1]), True, BLACK)
+        text_x = enlarged_rect.x + (enlarged_rect.width - kaart_text.get_width()) // 2
+        text_y = enlarged_rect.y + (enlarged_rect.height - kaart_text.get_height()) // 2
+        screen.blit(kaart_text, (text_x, text_y))
     
 
     # trek een kaart
-    knop_font = FONT_BUTTON
-    knop_text = knop_font.render("Trek een kaart", True, BLACK)
-    knop_rect = Rect(WIDTH // 2 - 100, HEIGHT - 300, 200, 60)
-    draw.rect(screen, GREY, knop_rect, border_radius=8)
-    screen.blit(knop_text, (knop_rect.centerx  - knop_text.get_width()// 2,
-                            knop_rect.centery  - knop_text.get_height() // 2))
+    trek_knop_rect = Rect(WIDTH // 2 - 100, HEIGHT - 300, 200, 60)
+    draw_button(screen, trek_knop_rect, "Trek een kaart", FONT_BUTTON, GREY, BLACK)
     
+    # eventuele melding
+    if melding_timer > 0:
+        melding_text = kaart_font.render(melding, True, "Red")
+        screen.blit(melding_text, (WIDTH // 2 - melding_text.get_width() // 2, HEIGHT // 2 - 70))    
+
     # altijd aan het einde!!!!!
     display.flip()
+
+    
+def draw_button(screen, rect, text, font, bg_color, text_color):
+    draw.rect(screen, bg_color, rect, border_radius=8)
+    tekst = font.render(text, True, text_color)
+    screen.blit(tekst, (rect.centerx - tekst.get_width() // 2, rect.centery - tekst.get_height() // 2))
+
+def scroll_hand(scroll_offset):
+    key_pressed = key.get_pressed()
+    if key_pressed[K_LEFT]:
+        scroll_offset -= 7
+    elif key_pressed[K_RIGHT]:
+        scroll_offset += 7
+    return scroll_offset
