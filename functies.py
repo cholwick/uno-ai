@@ -185,12 +185,12 @@ def pas_kaart_effect_toe(screen, kaart, richting, huidige_index, spelers_volgord
 
     elif waarde == "wild":
         print("Je hebt een wild kaart gespeeld.")
-        nieuwe_kleur = kies_kleur(screen, nieuwe_kleur)
+        nieuwe_kleur = kies_kleur(screen)
 
     elif waarde == "wild+4":
         # laat de volgende speler 4 kaarten trekken
         print("Je hebt een wild+4 kaart gespeeld.")
-        nieuwe_kleur = kies_kleur(screen, nieuwe_kleur)
+        nieuwe_kleur = kies_kleur(screen)
         slachtoffer = spelers_volgorde[volgende_index]
         for _ in range(4):
             if deck:
@@ -203,7 +203,7 @@ def pas_kaart_effect_toe(screen, kaart, richting, huidige_index, spelers_volgord
     return richting, volgende_index, nieuwe_kleur
 
 
-def kies_kleur(screen, oude_kleur):
+def kies_kleur(screen):
     kleuren = [
         ("rood", RED),
         ("geel", YELLOW),
@@ -219,7 +219,6 @@ def kies_kleur(screen, oude_kleur):
     while gekozen_kleur is None:
         # achtergrond
         screen.fill(WHITE)
-        toon_huidige_kleur(screen, oude_kleur)
         
 
         titel = font_titel.render("Kies een kleur:", True, BLACK)
@@ -268,20 +267,6 @@ def kies_kleur(screen, oude_kleur):
         klok.tick(30)  # 30 FPS om CPU te sparen
 
     return gekozen_kleur
-
-
-def toon_huidige_kleur(screen, huidige_kleur):
-    kleur_rgb = {
-        "rood": RED,
-        "geel": YELLOW,
-        "groen": GREEN,
-        "blauw": BLUE
-    }.get(huidige_kleur, BLACK)
-
-    label = FONT_BUTTON.render(f"Huidige kleur:", True, BLACK)
-    screen.blit(label, (WIDTH - 280, 20))
-
-    draw.circle(screen, kleur_rgb, (WIDTH - 120, 90), 30)
 
 
 def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, melding=None, melding_timer=0, scroll_offset=0):

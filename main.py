@@ -1,5 +1,5 @@
 from pygame import *
-from functies import toon_welkom_scherm,einde_scherm, deck_aanmaken, vraag_speler_profielen, vraag_aantal_spelers, deel_kaarten_uit, start_aflegstapel, kaart_is_speelbaar, pas_kaart_effect_toe, toon_huidige_kleur, toon_spel_status, draw_button, scroll_hand
+from functies import toon_welkom_scherm,einde_scherm, deck_aanmaken, vraag_speler_profielen, vraag_aantal_spelers, deel_kaarten_uit, start_aflegstapel, kaart_is_speelbaar, pas_kaart_effect_toe, toon_spel_status, draw_button, scroll_hand
 from data import WIDTH, HEIGHT, FPS, WHITE, BLACK, FONT_TITLE, FONT_BUTTON
 from sys import exit
 
