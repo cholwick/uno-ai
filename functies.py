@@ -326,6 +326,7 @@ def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, meldin
             continue
 
         # teken normale kaart met png
+
         draw.rect(screen, kaart_kleur, kaart_rect, border_radius=10)
         
         # teken waarde
