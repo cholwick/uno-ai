@@ -34,6 +34,8 @@ scroll_offset = 0
 melding = ""
 melding_timer = 0
 beurt_timer = 0
+spacing = 110
+kaart_breedte = 100
 
 # ==============================
 # Maak één Clock aan voor de loop
@@ -55,7 +57,7 @@ while True:
 
     while gekozen is None:
         
-        scroll_offset = scroll_hand(scroll_offset)
+        scroll_offset = scroll_hand(scroll_offset, hand, WIDTH, spacing, kaart_breedte)
         toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, melding, melding_timer, scroll_offset=scroll_offset, dynamic=beurt_timer)
 
         for evt in event.get():
@@ -114,8 +116,6 @@ while True:
                         else:
                             melding = "Die kaart kun jij niet spelen"
                             melding_timer = FPS * 2
-                    
-        max_offset = (WIDTH )
 
 
         melding_timer -= 1

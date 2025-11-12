@@ -419,10 +419,20 @@ def draw_kaart(screen, kaart, positie, huidige_kleur, kaart_breedte=100, kaart_h
     # screen.blit(kaart_text, (text_x, text_y))
     return f"{kleur} {waarde}"
 
-def scroll_hand(scroll_offset, max_offset, min_offset):
+def scroll_hand(scroll_offset, hand, width, spacing, kaart_breedte):
+    # totale breedte
+    totale_breedte = len(hand) * spacing -10
+    max_offset = max(0, totale_breedte - width + kaart_breedte)
+
     key_pressed = key.get_pressed()
     if key_pressed[K_LEFT] :
         scroll_offset += 10
     elif key_pressed[K_RIGHT]:
         scroll_offset -= 10
+
+    if scroll_offset > 0:
+        scroll_offset = 0
+    elif scroll_offset < -max_offset:
+        scroll_offset = -max_offset
+
     return scroll_offset
