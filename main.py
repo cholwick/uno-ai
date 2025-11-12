@@ -128,6 +128,7 @@ while True:
     # Als de speler een kaart trok: ga direct door naar de volgende speler
     if gekozen == 'getrokken' and trok_kaart and beurt_timer <= 0:
         huidige_index = volgende_speler
+        scroll_offset = 0
         continue
 
     if gekozen is not None and gekozen != 'getrokken':

@@ -1,7 +1,8 @@
 from pygame import *
 from data import *
-from random import shuffle
+from random import shuffle, randrange, choice
 from sys import exit
+from confetti import Confetti
 
 # game of uno
 # give the functions to main.py
@@ -27,13 +28,30 @@ def toon_welkom_scherm(screen):
 
 
 def einde_scherm(screen, winnaar):
-    screen.fill(WHITE)
-    draw_button(screen, Rect(WIDTH // 2 - 150, HEIGHT // 2 - 50, 300, 100), f"{winnaar} wint!", FONT_TITLE, YELLOW, BLACK)
+    confettis = []
+    confettis_timer = 0
+    
+    winner_text = FONT_TITLE.render(f"{winnaar.capitalize()} wint!", True, RED)
+    klik_esc_text = FONT_BUTTON.render("klik esc", True, BLACK)
 
-    draw_button(screen, Rect(WIDTH // 2 - 100, HEIGHT // 2 + 100, 200, 60), "klik esc", FONT_BUTTON, GREY, BLACK)
-
-    # wacht op afsluiten
     while True:
+        screen.fill(WHITE)
+
+        screen.blit(winner_text, (WIDTH // 2 - winner_text.get_width() // 2, HEIGHT // 3))
+        screen.blit(klik_esc_text, (WIDTH // 2 - klik_esc_text.get_width() // 2, HEIGHT // 2))
+
+        if confettis_timer == 0:
+            confettis.append(Confetti(randrange(0, WIDTH), 0, choice([RED, YELLOW, GREEN, BLUE]), choice(["vertical", "horizontal"]), randrange(-3, 4)))
+            confettis_timer = 5
+
+        confettis_timer -= 1
+
+        for confetti in confettis:
+            confetti.update(screen)
+        
+        confettis = [confetti for confetti in confettis if confetti.y < HEIGHT]
+
+        # wacht op afsluiten
         for evt in event.get():
             if evt.type == QUIT:
                 exit()
@@ -41,6 +59,8 @@ def einde_scherm(screen, winnaar):
                 if evt.key == K_ESCAPE:
                     quit()
                     exit()
+        
+        display.flip()
 
 
 def deck_aanmaken():
@@ -289,7 +309,7 @@ def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, meldin
     kaart_kleur = kleur_map.get(bovenste_kaart[0], (230, 230, 230))  # fallback grijs
     kaart_rect = Rect(WIDTH // 2 - 75, 80, 150, 200)
     kaart_text = bovenste_kaart[1]
-    kaart = draw_kaart(screen, bovenste_kaart, (WIDTH // 2 - 75, 125), 150, 200, kaart_waarde=kaart_text)
+    kaart = draw_kaart(screen, bovenste_kaart, (WIDTH // 2 - 75, 125), huidige_kleur, 150, 200, kaart_waarde=kaart_text)
     bovenste_kaart_text = kaart_font.render(f"Bovenste kaart", True, BLACK)
     screen.blit(bovenste_kaart_text, ((WIDTH // 2) - (bovenste_kaart_text.get_width() // 2), 80))
 
@@ -360,8 +380,8 @@ def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, meldin
     
 
     # trek een kaart
-    trek_knop_rect = Rect(WIDTH // 2 - 115, HEIGHT - 260, 230, 60)
-    draw_button(screen, trek_knop_rect, "Trek een kaart", FONT_BUTTON, GREY, BLACK)
+    #trek_knop_rect = Rect(WIDTH // 2 - 115, HEIGHT - 260, 230, 60)
+    draw_button(screen, WIDTH // 2 - 115, HEIGHT - 260, "Trek een kaart", FONT_BUTTON, GREY, BLACK)
     
     # eventuele melding
     if melding_timer > 0:
@@ -372,12 +392,12 @@ def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, meldin
     display.flip()
 
     
-def draw_button(screen, rect, text, font, bg_color, text_color):
-    draw.rect(screen, bg_color, rect, border_radius=8)
+def draw_button(screen, x, y, text, font, bg_color, text_color):
     tekst = font.render(text, True, text_color)
-    screen.blit(tekst, (rect.centerx - tekst.get_width() // 2, rect.centery - tekst.get_height() // 2))
+    draw.rect(screen, bg_color, ((x + 4, y), (tekst.get_width() + 10, tekst.get_height() + 5)), border_radius=8)
+    screen.blit(tekst, (x + 6, y))
 
-def draw_kaart(screen, kaart, positie, kaart_breedte=100, kaart_hoogte=150, kaart_waarde=None):
+def draw_kaart(screen, kaart, positie, huidige_kleur, kaart_breedte=100, kaart_hoogte=150,  kaart_waarde=None):
     kleur_map = {
         "rood": RED,
         "geel": YELLOW,
@@ -387,8 +407,8 @@ def draw_kaart(screen, kaart, positie, kaart_breedte=100, kaart_hoogte=150, kaar
     }
     kleur, waarde = kaart
     kaart_kleur = kleur_map.get(kleur, (230, 230, 230))  # fallback grijs
-    kaart_rect = Rect(positie[0], positie[1], 100, 150)
-    screen.blit(transform.scale(image.load("images/" + {RED: "red_cards", YELLOW: "yellow_cards", GREEN: "green_cards", BLUE: "blue_cards", BLACK: "special_cards"}[kaart_kleur] + "/" + kaart_waarde + ".png").convert_alpha(), (kaart_breedte, kaart_hoogte)), (kaart_rect))
+    if waarde != "wild+4" and waarde != "wild": screen.blit(transform.scale(image.load("images/" + {RED: "red_cards", YELLOW: "yellow_cards", GREEN: "green_cards", BLUE: "blue_cards", BLACK: "special_cards"}[kaart_kleur] + "/" + kaart_waarde + ".png").convert_alpha(), (kaart_breedte, kaart_hoogte)), positie)
+    else: screen.blit(transform.scale(image.load("images/special_cards/" + kaart_waarde + "_" + {"rood": "red", "geel": "yellow", "groen": "green", "blauw": "blue"}[huidige_kleur] + ".png").convert_alpha(), (kaart_breedte, kaart_hoogte)), positie)
     # draw.rect(screen, kaart_kleur, kaart_rect, border_radius=8)
     # kaart_font = FONT_BUTTON
     # kaart_text = kaart_font.render(str(waarde), True, BLACK)
