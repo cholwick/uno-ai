@@ -54,6 +54,7 @@ while True:
     volgende_speler = (huidige_index + richting) % len(spelers_volgorde)
 
     while gekozen is None:
+        
         scroll_offset = scroll_hand(scroll_offset)
         toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, melding, melding_timer, scroll_offset=scroll_offset, dynamic=beurt_timer)
 
@@ -113,9 +114,9 @@ while True:
                         else:
                             melding = "Die kaart kun jij niet spelen"
                             melding_timer = FPS * 2
+                    
+        max_offset = (WIDTH )
 
-        #max_offset = max(0, len(hand) * 110 - (WIDTH - 200))
-        #scroll_offset = max(-max_offset, min(0, scroll_offset))
 
         melding_timer -= 1
 
@@ -151,5 +152,32 @@ while True:
         print(f"{speler} roept UNO!")
     elif len(hand) == 0:
         print(f"{speler} heeft gewonnen!")
-        einde_scherm(screen, speler)  # optioneel: toon einde scherm
+        einde_scherm(screen, speler) # optioneel: toon einde scherm
+
+        toon_welkom_scherm(screen)
+        event.clear()
+        # --- Vraag aantal spelers ---
+        aantal_spelers = vraag_aantal_spelers(screen)   
+        print("Aantal spelers gekozen:", aantal_spelers)
+        # --- Vraag namen van spelers ---
+        spelers_namen = vraag_speler_profielen(screen, aantal_spelers)  
+        print("Spelers:", spelers_namen)
+
+        # ==============================
+
+        # ==== spelvoorbereiding ====
+        deck = deck_aanmaken()
+        spelers_handen, deck = deel_kaarten_uit(deck, spelers_namen)
+        aflegstapel, deck = start_aflegstapel(deck)
+
+        richting = 1  # 1 voor met de klok mee, -1 voor tegen de klok in
+        huidige_index = 0  # index van de huidige speler in spelers_namen
+        huidige_kleur = aflegstapel[-1][0]
+        spelers_volgorde = spelers_namen.copy()
+        scroll_offset = 0
+        melding = ""
+        melding_timer = 0
+        beurt_timer = 0
+
+
 

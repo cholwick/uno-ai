@@ -34,7 +34,9 @@ def einde_scherm(screen, winnaar):
     winner_text = FONT_TITLE.render(f"{winnaar.capitalize()} wint!", True, RED)
     klik_esc_text = FONT_BUTTON.render("klik esc", True, BLACK)
 
-    while True:
+    active = True
+
+    while active:
         screen.fill(WHITE)
 
         screen.blit(winner_text, (WIDTH // 2 - winner_text.get_width() // 2, HEIGHT // 3))
@@ -54,11 +56,11 @@ def einde_scherm(screen, winnaar):
         # wacht op afsluiten
         for evt in event.get():
             if evt.type == QUIT:
+                quit()
                 exit()
             if evt.type == KEYDOWN:
                 if evt.key == K_ESCAPE:
-                    quit()
-                    exit()
+                    active = False
         
         display.flip()
 
@@ -417,9 +419,9 @@ def draw_kaart(screen, kaart, positie, huidige_kleur, kaart_breedte=100, kaart_h
     # screen.blit(kaart_text, (text_x, text_y))
     return f"{kleur} {waarde}"
 
-def scroll_hand(scroll_offset):
+def scroll_hand(scroll_offset, max_offset, min_offset):
     key_pressed = key.get_pressed()
-    if key_pressed[K_LEFT]:
+    if key_pressed[K_LEFT] :
         scroll_offset += 10
     elif key_pressed[K_RIGHT]:
         scroll_offset -= 10
