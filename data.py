@@ -16,8 +16,8 @@ GREY = (200, 200, 200)
 
 # lettertypen
 font.init()
-FONT_TITLE = font.Font(None, 80)
-FONT_BUTTON = font.Font(None, 50)
+FONT_TITLE = font.Font("Comic Sans MS.ttf", 60)
+FONT_BUTTON = font.Font("Comic Sans MS.ttf", 30)
 
 # kaartkleuren en waarden
 KLEUREN = ["rood", "geel", "groen", "blauw"]

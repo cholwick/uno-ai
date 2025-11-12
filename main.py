@@ -33,6 +33,7 @@ spelers_volgorde = spelers_namen.copy()
 scroll_offset = 0
 melding = ""
 melding_timer = 0
+beurt_timer = 0
 
 # ==============================
 # Maak één Clock aan voor de loop
@@ -54,7 +55,7 @@ while True:
 
     while gekozen is None:
         scroll_offset = scroll_hand(scroll_offset)
-        toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, melding, melding_timer, scroll_offset=scroll_offset)
+        toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, melding, melding_timer, scroll_offset=scroll_offset, dynamic=beurt_timer)
 
         for evt in event.get():
             if evt.type == QUIT:
@@ -76,7 +77,7 @@ while True:
                 spacing = 110
 
                 # controleer op klikkenvan trek kaart knop
-                trek_knop_rect = Rect(WIDTH // 2 - 100, HEIGHT - 300, 200, 60)
+                trek_knop_rect = Rect(WIDTH // 2 - 115, HEIGHT - 260, 230, 60)
                 if trek_knop_rect.collidepoint(x, y):
                     if deck:
                         getrokken = deck.pop()
@@ -86,48 +87,50 @@ while True:
                         trok_kaart = True
                         gekozen = 'getrokken'  # non-None to break out of the input loop
 
-            elif evt.type == MOUSEBUTTONUP and evt.button == 1:
+            elif evt.type == MOUSEBUTTONUP and evt.button == 1 and beurt_timer <= 0:
                 x, y = evt.pos
                 spacing = 110
-                kaart_braadte = 100
+                kaart_breedte = 100
+                kaart_hoogte = 150
                 y_kaart = HEIGHT - 150
-                max_zichtbare_kaarten = 7
 
-                start_index = max(0, - scroll_offset // spacing)
-                end_index = min(len(hand), start_index + max_zichtbare_kaarten)
-                zichtbare_kaarten = hand[start_index:end_index]
+                # zelfde berekening als in toon_spel_status()
+                base_x = (WIDTH - (len(hand) * spacing - 10)) // 2
 
-                base_x = (WIDTH - (len(zichtbare_kaarten) * spacing - 10)) // 2
+                for i, kaart in enumerate(hand):
+                    kaart_x = base_x + i * spacing + scroll_offset
+                    kaart_rect = Rect(kaart_x, y_kaart, kaart_breedte, kaart_hoogte)
 
-                for i,kaart in enumerate(zichtbare_kaarten):
-                    kaart_rect = Rect(base_x + i * spacing, y_kaart, kaart_braadte, 150)
+                    # tijdelijke visuele debug — laat rode rand zien waar de rect echt ligt
+                    draw.rect(screen, "red", kaart_rect, 3)
+                    display.flip()
+
                     if kaart_rect.collidepoint(x, y):
-                        echte_index = start_index + i
-                        gekozen_kaart = hand[echte_index]
-                        if kaart_is_speelbaar(gekozen_kaart, bovenste_kaart, huidige_kleur):
-                            gekozen = gekozen_kaart
+                        if kaart_is_speelbaar(kaart, bovenste_kaart, huidige_kleur):
+                            gekozen = kaart
+                            beurt_timer = 10
                             break
                         else:
-                            scroll_offset = scroll_hand(scroll_offset)
-                            toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, melding, melding_timer, scroll_offset=scroll_offset)
-                            melding="Die kaart kun jij niet spelen"
-                            melding_timer = FPS * 2  # toon melding voor 2 seconden
+                            melding = "Die kaart kun jij niet spelen"
+                            melding_timer = FPS * 2
 
-
-        max_offset = max(0, len(hand) * 110 - (WIDTH - 200))
-        scroll_offset = max(-max_offset, min(0, scroll_offset))
+        #max_offset = max(0, len(hand) * 110 - (WIDTH - 200))
+        #scroll_offset = max(-max_offset, min(0, scroll_offset))
 
         melding_timer -= 1
+
+        if beurt_timer > 0:
+            beurt_timer -= 1
        
         klok.tick(FPS)  # houd framerate constant
 
     # Kaart spelen of kaart trekken
     # Als de speler een kaart trok: ga direct door naar de volgende speler
-    if gekozen == 'getrokken' and trok_kaart:
+    if gekozen == 'getrokken' and trok_kaart and beurt_timer <= 0:
         huidige_index = volgende_speler
         continue
 
-    if gekozen is not None:
+    if gekozen is not None and gekozen != 'getrokken':
         print(f"{speler} speelt {gekozen}")
         hand.remove(gekozen)
         aflegstapel.append(gekozen)
