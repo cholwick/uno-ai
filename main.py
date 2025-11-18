@@ -71,7 +71,7 @@ while True:
                     exit()
 
             elif evt.type == MOUSEWHEEL:
-                scroll_offset += evt.y * 20  # pas scroll snelheid aan indien nodig
+                scroll_offset += evt.y * 25  # pas scroll snelheid aan indien nodig
 
             elif evt.type == MOUSEBUTTONDOWN and evt.button == 1:
                 x, y = evt.pos
@@ -137,7 +137,7 @@ while True:
         hand.remove(gekozen)
         aflegstapel.append(gekozen)
         richting, huidige_index, huidige_kleur = pas_kaart_effect_toe(
-            screen, gekozen, richting, huidige_index, spelers_volgorde, spelers_handen, deck
+            screen, gekozen, richting, spelers_volgorde, huidige_index, spelers_handen, deck
         )
     else:
         # Dit gebeurt eigenlijk nooit met de klik-logica, maar blijft fallback

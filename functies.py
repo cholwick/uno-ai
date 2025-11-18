@@ -170,7 +170,7 @@ def vraag_aantal_spelers(screen):
 
 def kaart_is_speelbaar(kaart, bovenste_kaart, huidige_kleur):
     kleur, waarde = kaart
-    top_kleur, top_waarde = bovenste_kaart
+    _, top_waarde = bovenste_kaart
 
     # kaart is speelbaar als de kleur of waarde overeenkomt, of als het een wild kaart is
     return (kleur == huidige_kleur or
@@ -178,51 +178,48 @@ def kaart_is_speelbaar(kaart, bovenste_kaart, huidige_kleur):
             kleur == "zwart"
             )
 
+def Bepaal_effect(kaart, spelers_aantal):
+    kleur , waarde = kaart
 
-def pas_kaart_effect_toe(screen, kaart, richting, huidige_index, spelers_volgorde, spelers_handen, deck):
-    kleur, waarde = kaart
-    volgende_speler = (huidige_index + richting) % len(spelers_volgorde)
-
-    volgende_index = (volgende_speler)
-    nieuwe_kleur = kleur
-
+    if waarde == "skip":
+        return {"skip":True}
     if waarde == "reverse":
-        if len(spelers_volgorde) == 2:
-            # bij 2 spelers werkt reverse als skip
-            volgende_index = (huidige_index + 2 * richting) % len(spelers_volgorde)
-        else:
-            richting *= -1  # verander de speelrichting
+        return {"reverse":True, "skip": spelers_aantal == 2}
+    if waarde == "+2":
+        return {"kaarten_trekken":2, "skip":True}
+    if waarde == "wild+4":
+        return {"kaarten_trekken":4, "skip": True, "kleur_kiezen":True}
+    if waarde == "wild":
+        return {"kleur_kiezen":True}
+    
+    return {}
 
-    elif waarde == "skip":
-        # sla een speler over
-        volgende_index = (huidige_index + 2 * richting) % len(spelers_volgorde)
+def voer_effect_uit(effect, deck, spelers_handen, slachtoffer):
+    if "kaarten_trekken" in effect:
+        for _ in range(effect["kaarten_trekken"]):
+            spelers_handen[slachtoffer].append(deck.pop())
+        
 
-    elif waarde == "+2":
-        # laat de volgende speler 2 kaarten trekken
-        slachtoffer = spelers_volgorde[volgende_index]
-        for _ in range(2):
-            if deck:
-                spelers_handen[slachtoffer].append(deck.pop())
-        volgende_index = (huidige_index + 2 * richting) % len(spelers_volgorde)
+def pas_kaart_effect_toe(screen, kaart, richting, speler, index, spelers_handen, deck):
+    effect = Bepaal_effect(kaart, len(speler))
 
-    elif waarde == "wild":
-        print("Je hebt een wild kaart gespeeld.")
+    if effect.get("reverse"):
+        richting *= -1
+
+    # wie is volgende speler
+    stappen = 2 if effect.get("skip") else 1
+    volgende = (index + stappen * richting) % len(speler)
+
+    # strafkaarten
+    slachtoffer = speler[(index + richting) % len(speler)]
+    voer_effect_uit(effect, deck, spelers_handen, slachtoffer)
+
+    #kleurkeuze
+    nieuwe_kleur = kaart[0]
+    if effect.get("kleur_kiezen"):
         nieuwe_kleur = kies_kleur(screen)
 
-    elif waarde == "wild+4":
-        # laat de volgende speler 4 kaarten trekken
-        print("Je hebt een wild+4 kaart gespeeld.")
-        nieuwe_kleur = kies_kleur(screen)
-        slachtoffer = spelers_volgorde[volgende_index]
-        for _ in range(4):
-            if deck:
-                spelers_handen[slachtoffer].append(deck.pop())
-        volgende_index = (huidige_index + 2 * richting) % len(spelers_volgorde)
-
-    if nieuwe_kleur == "zwart":
-        nieuwe_kleur = kleur  # voorkom dat de kleur zwart blijft
-
-    return richting, volgende_index, nieuwe_kleur
+    return richting, volgende, nieuwe_kleur
 
 
 def kies_kleur(screen):
@@ -410,7 +407,7 @@ def draw_kaart(screen, kaart, positie, huidige_kleur, kaart_breedte=100, kaart_h
     kleur, waarde = kaart
     kaart_kleur = kleur_map.get(kleur, (230, 230, 230))  # fallback grijs
     if waarde != "wild+4" and waarde != "wild": screen.blit(transform.scale(image.load("images/" + {RED: "red_cards", YELLOW: "yellow_cards", GREEN: "green_cards", BLUE: "blue_cards", BLACK: "special_cards"}[kaart_kleur] + "/" + kaart_waarde + ".png").convert_alpha(), (kaart_breedte, kaart_hoogte)), positie)
-    else: screen.blit(transform.scale(image.load("images/special_cards/" + kaart_waarde + "_" + {"rood": "red", "geel": "yellow", "groen": "green", "blauw": "blue"}[huidige_kleur] + ".png").convert_alpha(), (kaart_breedte, kaart_hoogte)), positie)
+    else: screen.blit(transform.scale(image.load("images/special_cards/" + kaart_waarde + "_" + {"rood": "red", "geel": "yellow", "groen": "green", "blauw": "blue", "zwart": "black"}[huidige_kleur] + ".png").convert_alpha(), (kaart_breedte, kaart_hoogte)), positie)
     # draw.rect(screen, kaart_kleur, kaart_rect, border_radius=8)
     # kaart_font = FONT_BUTTON
     # kaart_text = kaart_font.render(str(waarde), True, BLACK)
