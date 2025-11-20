@@ -36,13 +36,14 @@ def einde_scherm(screen, winnaar):
 
     active = True
 
+    # eind loop voor confetti
     while active:
         screen.fill(WHITE)
-
         screen.blit(winner_text, (WIDTH // 2 - winner_text.get_width() // 2, HEIGHT // 3))
         screen.blit(klik_esc_text, (WIDTH // 2 - klik_esc_text.get_width() // 2, HEIGHT // 2))
 
         if confettis_timer == 0:
+            # randrange is een een random range function
             confettis.append(Confetti(randrange(0, WIDTH), 0, choice([RED, YELLOW, GREEN, BLUE]), choice(["vertical", "horizontal"]), randrange(-3, 4)))
             confettis_timer = 5
 
@@ -169,6 +170,7 @@ def vraag_aantal_spelers(screen):
 
 
 def kaart_is_speelbaar(kaart, bovenste_kaart, huidige_kleur):
+    # twee waardes omdat het een lijst is met twee items
     kleur, waarde = kaart
     _, top_waarde = bovenste_kaart
 
@@ -287,8 +289,49 @@ def kies_kleur(screen):
 
     return gekozen_kleur
 
+def get_kaart_rect(i, hand_length, spacing, scroll_offset, y, card_w, card_h, screen_width):
 
-def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, melding=None, melding_timer=0, scroll_offset=0, dynamic=0):
+    base_x = (screen_width - (hand_length * spacing - 10)) // 2
+    x = base_x + i * spacing + scroll_offset
+    return Rect(x, y, card_w, card_h)
+
+def detect_hover(spacing, hand, scroll_offset, y_kaart, kaart_breedte, kaart_hoogte, screen_width):
+    muis_pos = mouse.get_pos()
+    for i in range(len(hand)):
+        kaart_rect = get_kaart_rect(i, len(hand), spacing, scroll_offset, y_kaart, kaart_breedte, kaart_hoogte, screen_width)
+        if kaart_rect.collidepoint(muis_pos):
+            return i
+    return None
+
+def draw_kaart(screen, kaart, rect):
+    kleur, waarde = kaart
+    kleur_map = {
+        "rood": "red_cards",
+        "geel": "yellow_cards",
+        "groen": "green_cards",
+        "blauw": "blue_cards",
+        "zwart": "special_cards"
+    }
+
+    folder = kleur_map[kleur]
+    img = image.load(f"images/{folder}/{waarde}.png").convert_alpha()
+    img = transform.scale(img, (rect.width, rect.height))
+
+    screen.blit(img, (rect.x, rect.y))
+
+def draw_kaart_hovered(screen, kaart, rect):
+    scale = 1.25
+    new_w = int(rect.width * scale)
+    new_h = int(rect.height * scale)
+
+    new_x = rect.x - (new_w - rect.width) // 2
+    new_y = rect.y - (new_h - rect.height) - 10
+
+    hovered_rect = Rect(new_x, new_y, new_w, new_h)
+    draw_kaart(screen, kaart, hovered_rect)
+
+
+def toon_spel_status(screen, speler, hand, melding=None, melding_timer=0, scroll_offset=0, bovenste_kaart=None):
     screen.fill(WHITE)
 
     # titel
@@ -297,95 +340,29 @@ def toon_spel_status(screen, speler, hand, bovenste_kaart, huidige_kleur, meldin
     screen.blit(text, (WIDTH // 2 - text.get_width() // 2, 5))
 
     # bovenste kaart
-    kaart_font = FONT_BUTTON
-    kleur_map = {
-        "rood": RED,
-        "geel": YELLOW,
-        "groen": GREEN,
-        "blauw": BLUE,
-        "zwart": BLACK
-    }
-    kaart_kleur = kleur_map.get(bovenste_kaart[0], (230, 230, 230))  # fallback grijs
-    kaart_rect = Rect(WIDTH // 2 - 75, 80, 150, 200)
-    kaart_text = bovenste_kaart[1]
-    kaart = draw_kaart(screen, bovenste_kaart, (WIDTH // 2 - 75, 125), huidige_kleur, 150, 200, kaart_waarde=kaart_text)
-    bovenste_kaart_text = kaart_font.render(f"Bovenste kaart", True, BLACK)
-    screen.blit(bovenste_kaart_text, ((WIDTH // 2) - (bovenste_kaart_text.get_width() // 2), 80))
+    if bovenste_kaart is not None:
+        kaart_rect = Rect(WIDTH // 2 - 75, HEIGHT // 2 - 100, 150, 225)
+        draw_kaart(screen, bovenste_kaart, kaart_rect)
 
-
-    # hand van de speler
-    max_zichtbare_kaarten = 7
-    x = 50
-    y = (HEIGHT - 150) + (dynamic * 5)
-    spacing = 110
-    kaart_breedte = 100
-    kaart_hoogte = 150
-
-    # berekening van startindex op basis van scroll_offset (scroll gebruikt als page index)
-    start_index = max(0, -scroll_offset // spacing)
-    eind_index = min(len(hand), start_index + max_zichtbare_kaarten)
-
-    # zichtbare_kaarten = hand[start_index:eind_index]
-    
-
-    base_x = (WIDTH - (len(hand) * spacing - 10)) // 2
-
-    # muispositie voor hover-detectie
-    muis_pos = mouse.get_pos()
-
-    # teken eerst niet-hovered kaarten, bewaar hovered kaart om later bovenop te tekenen
-    hovered = None
+    hover_index = detect_hover(110, hand, scroll_offset, HEIGHT - 150, 100, 150, WIDTH)
     for i, kaart in enumerate(hand):
-        kaart_kleur = kleur_map.get(kaart[0], (230, 230, 230))  # fallback grijs
-        kaart_waarde = kaart[1]
-        rect_x = base_x + i * spacing
-        kaart_rect = Rect(rect_x + scroll_offset, y, kaart_breedte, kaart_hoogte)
-
-        if kaart_rect.collidepoint(muis_pos):
-            # bewaar hovered kaart om later bovenop te tekenen
-            hovered = (i, kaart, kaart_rect, kaart_kleur)
+        rect = get_kaart_rect(i, len(hand), 110, scroll_offset, HEIGHT - 150, 100, 150, WIDTH)
+        if i == hover_index:
             continue
+        draw_kaart(screen, kaart, rect)
 
-        # teken normale kaart met png
-
-        #draw.rect(screen, kaart_kleur, kaart_rect, border_radius=10) 'rood': 'red_cards', 'geel': 'yellow_cards', 'groen': 'green_cards', 'blauw': 'blue_cards', 'zwart': 'special_cards', 
-        screen.blit(transform.scale(image.load("images/" + {RED: "red_cards", YELLOW: "yellow_cards", GREEN: "green_cards", BLUE: "blue_cards", BLACK: "special_cards"}[kaart_kleur] + "/" + kaart_waarde + ".png").convert_alpha(), (kaart_breedte, kaart_hoogte)), (kaart_rect))
-        
-        # teken waarde
-        # kaart_text = kaart_font.render(str(kaart[1]), True, BLACK)
-        # text_x = kaart_rect.x + (kaart_rect.width - kaart_text.get_width()) // 2
-        # text_y = kaart_rect.y + (kaart_rect.height - kaart_text.get_height()) // 2
-        # screen.blit(kaart_text, (text_x, text_y))
-
-    # teken hovered kaart als die er is, iets groter en iets omhoog geplaatst
-    if hovered is not None:
-        i, kaart, kaart_rect, kaart_kleur = hovered
-        kaart_waarde = kaart[1]
-        scale = 1.25
-        new_w = int(kaart_rect.width * scale)
-        new_h = int(kaart_rect.height * scale)
-        new_x = kaart_rect.x - (new_w - kaart_rect.width) // 2
-        new_y = kaart_rect.y - (new_h - kaart_rect.height) - 10
-        enlarged_rect = Rect(new_x, new_y, new_w, new_h)
-        # achtergrond en border
-        # draw.rect(screen, kaart_kleur, enlarged_rect, border_radius=10)
-        # draw.rect(screen, BLACK, enlarged_rect, 2, border_radius=10)
-        screen.blit(transform.scale(image.load("images/" + {RED: "red_cards", YELLOW: "yellow_cards", GREEN: "green_cards", BLUE: "blue_cards", BLACK: "special_cards"}[kaart_kleur] + "/" + kaart_waarde + ".png").convert_alpha(), (kaart_breedte * scale, kaart_hoogte * scale)), (enlarged_rect))
-        # teken waarde gecentreerd
-        # kaart_text = kaart_font.render(str(kaart[1]), True, BLACK)
-        # text_x = enlarged_rect.x + (enlarged_rect.width - kaart_text.get_width()) // 2
-        # text_y = enlarged_rect.y + (enlarged_rect.height - kaart_text.get_height()) // 2
-        # screen.blit(kaart_text, (text_x, text_y))
-    
-
-    # trek een kaart
-    #trek_knop_rect = Rect(WIDTH // 2 - 115, HEIGHT - 260, 230, 60)
+    if hover_index is not None:
+        rect = get_kaart_rect(hover_index, len(hand), 110, scroll_offset, HEIGHT - 150, 100, 150, WIDTH)
+        kaart = hand[hover_index]
+        draw_kaart_hovered(screen, kaart, rect)
+    # trek een kaart knop
     draw_button(screen, WIDTH // 2 - 115, HEIGHT - 260, "Trek een kaart", FONT_BUTTON, GREY, BLACK)
     
     # eventuele melding
-    if melding_timer > 0:
-        melding_text = kaart_font.render(melding, True, "Red")
-        screen.blit(melding_text, (WIDTH // 2 - melding_text.get_width() // 2, HEIGHT // 2 - 70))    
+    if melding_timer > 0 and melding is not None:
+        melding_font = FONT_BUTTON
+        melding_text = melding_font.render(melding, True, RED)
+        screen.blit(melding_text, (WIDTH // 2 - melding_text.get_width() // 2, HEIGHT // 2 - melding_text.get_height() // 2))  
 
     # altijd aan het einde!!!!!
     display.flip()
@@ -396,25 +373,13 @@ def draw_button(screen, x, y, text, font, bg_color, text_color):
     draw.rect(screen, bg_color, ((x + 4, y), (tekst.get_width() + 10, tekst.get_height() + 5)), border_radius=8)
     screen.blit(tekst, (x + 6, y))
 
-def draw_kaart(screen, kaart, positie, huidige_kleur, kaart_breedte=100, kaart_hoogte=150,  kaart_waarde=None):
-    kleur_map = {
-        "rood": RED,
-        "geel": YELLOW,
-        "groen": GREEN,
-        "blauw": BLUE,
-        "zwart": BLACK
-    }
-    kleur, waarde = kaart
-    kaart_kleur = kleur_map.get(kleur, (230, 230, 230))  # fallback grijs
-    if waarde != "wild+4" and waarde != "wild": screen.blit(transform.scale(image.load("images/" + {RED: "red_cards", YELLOW: "yellow_cards", GREEN: "green_cards", BLUE: "blue_cards", BLACK: "special_cards"}[kaart_kleur] + "/" + kaart_waarde + ".png").convert_alpha(), (kaart_breedte, kaart_hoogte)), positie)
-    else: screen.blit(transform.scale(image.load("images/special_cards/" + kaart_waarde + "_" + {"rood": "red", "geel": "yellow", "groen": "green", "blauw": "blue", "zwart": "black"}[huidige_kleur] + ".png").convert_alpha(), (kaart_breedte, kaart_hoogte)), positie)
     # draw.rect(screen, kaart_kleur, kaart_rect, border_radius=8)
     # kaart_font = FONT_BUTTON
     # kaart_text = kaart_font.render(str(waarde), True, BLACK)
     # text_x = kaart_rect.x + (kaart_rect.width - kaart_text.get_width()) // 2
     # text_y = kaart_rect.y + (kaart_rect.height - kaart_text.get_height()) // 2
     # screen.blit(kaart_text, (text_x, text_y))
-    return f"{kleur} {waarde}"
+    # ==============================================================================
 
 def scroll_hand(scroll_offset, hand, width, spacing, kaart_breedte):
     # totale breedte

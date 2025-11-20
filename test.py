@@ -1,5 +1,6 @@
 import unittest
-from functies import kaart_is_speelbaar, pas_kaart_effect_toe
+from functies import kaart_is_speelbaar, pas_kaart_effect_toe, get_kaart_rect
+from pygame import Rect
 
 class TestKaartIsSpeelbaar(unittest.TestCase):
 
@@ -41,7 +42,24 @@ class TestKaartIsSpeelbaar(unittest.TestCase):
             kaart_is_speelbaar(("blauw", "5"), ("zwart", "wild"), "rood")
         )
 
-class TestPasKaartEffectToe(unittest.TestCase):
+class TestCardRect(unittest.TestCase):
+
+    def test_rect_berekening(self):
+        rect = get_kaart_rect(
+        i=0,
+        hand_length=5,
+        spacing=110,
+        scroll_offset=0,
+        y=500,
+        card_w=100,
+        card_h=150,
+        screen_width=1280
+        )
+
+        self.assertIsInstance(rect, Rect)
+        self.assertEqual(rect.y, 500)
+        self.assertEqual(rect.width, 100)
+        self.assertEqual(rect.height, 150)
     
 
 if __name__ == "__main__":
