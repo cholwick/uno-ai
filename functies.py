@@ -303,21 +303,42 @@ def detect_hover(spacing, hand, scroll_offset, y_kaart, kaart_breedte, kaart_hoo
             return i
     return None
 
-def draw_kaart(screen, kaart, rect):
+def draw_kaart(screen, kaart, rect, huidige_kleur=None):
     kleur, waarde = kaart
-    kleur_map = {
-        "rood": "red_cards",
-        "geel": "yellow_cards",
-        "groen": "green_cards",
-        "blauw": "blue_cards",
-        "zwart": "special_cards"
-    }
 
-    folder = kleur_map[kleur]
-    img = image.load(f"images/{folder}/{waarde}.png").convert_alpha()
+    # --- SPECIALE (WILD) KAARTEN ---
+    if kleur == "zwart":  
+        # huidige_kleur bepaalt de afbeelding bij wild/wild+4
+        if huidige_kleur is None:
+            path = f"images/special_cards/{waarde}.png"  # standaard naar blauw als fallback
+        else:
+            kleur_map = {
+                "rood": "red",
+                "geel": "yellow",
+                "groen": "green",
+                "blauw": "blue"
+            }
+
+            # fallback: als huidige_kleur nog None is (bijv. eerste beurt)
+            chosen = kleur_map.get(huidige_kleur, "blue")
+            path = f"images/special_cards/{waarde}_{chosen}.png"
+
+    else:
+        # --- NORMALE KAARTEN ---
+        folder_map = {
+            "rood": "red_cards",
+            "geel": "yellow_cards",
+            "groen": "green_cards",
+            "blauw": "blue_cards"
+        }
+
+        folder = folder_map[kleur]
+        path = f"images/{folder}/{waarde}.png"
+
+    # --- LADEN EN TEKENEN ---
+    img = image.load(path).convert_alpha()
     img = transform.scale(img, (rect.width, rect.height))
-
-    return screen.blit(img, (rect.x, rect.y))
+    screen.blit(img, (rect.x, rect.y))
 
 def draw_kaart_hovered(screen, kaart, rect):
     scale = 1.25
@@ -328,7 +349,7 @@ def draw_kaart_hovered(screen, kaart, rect):
     new_y = rect.y - (new_h - rect.height) - 10
 
     hovered_rect = Rect(new_x, new_y, new_w, new_h)
-    draw_kaart(screen, kaart, hovered_rect)
+    draw_kaart(screen, kaart, hovered_rect, huidige_kleur=None)
 
 
 def toon_spel_status(screen, speler, hand, melding=None, melding_timer=0, scroll_offset=0, bovenste_kaart=None, gekozen_kleur=None):
@@ -339,21 +360,17 @@ def toon_spel_status(screen, speler, hand, melding=None, melding_timer=0, scroll
     text = font.render(f"{speler.capitalize()} is aan de beurt", True, BLACK)
     screen.blit(text, (WIDTH // 2 - text.get_width() // 2, 5))
 
-    # huidige kleur weergeven
-    kleur_text = font.render(f"Huidige kleur: {bovenste_kaart[0].capitalize()}", True, BLACK)
-    screen.blit(kleur_text, (WIDTH // 2 - kleur_text.get_width() // 2, 70))
-
     # bovenste kaart
     if bovenste_kaart is not None:
         kaart_rect = Rect(WIDTH // 2 - 75, HEIGHT // 2 - 100, 150, 225)
-        draw_kaart(screen, bovenste_kaart, kaart_rect)
+        draw_kaart(screen, bovenste_kaart, kaart_rect, huidige_kleur=gekozen_kleur)
 
     hover_index = detect_hover(110, hand, scroll_offset, HEIGHT - 150, 100, 150, WIDTH)
     for i, kaart in enumerate(hand):
         rect = get_kaart_rect(i, len(hand), 110, scroll_offset, HEIGHT - 150, 100, 150, WIDTH)
         if i == hover_index:
             continue
-        draw_kaart(screen, kaart, rect)
+        draw_kaart(screen, kaart, rect, huidige_kleur=None)
 
     if hover_index is not None:
         rect = get_kaart_rect(hover_index, len(hand), 110, scroll_offset, HEIGHT - 150, 100, 150, WIDTH)

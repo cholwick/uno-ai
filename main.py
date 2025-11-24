@@ -58,7 +58,7 @@ while True:
     while gekozen is None:
         
         scroll_offset = scroll_hand(scroll_offset, hand, WIDTH, spacing, kaart_breedte)
-        toon_spel_status(screen, speler, hand, melding, melding_timer, scroll_offset, bovenste_kaart)
+        toon_spel_status(screen, speler, hand, melding, melding_timer, scroll_offset, bovenste_kaart, huidige_kleur)
 
         for evt in event.get():
             if evt.type == QUIT:
