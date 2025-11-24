@@ -317,7 +317,7 @@ def draw_kaart(screen, kaart, rect):
     img = image.load(f"images/{folder}/{waarde}.png").convert_alpha()
     img = transform.scale(img, (rect.width, rect.height))
 
-    screen.blit(img, (rect.x, rect.y))
+    return screen.blit(img, (rect.x, rect.y))
 
 def draw_kaart_hovered(screen, kaart, rect):
     scale = 1.25
@@ -331,13 +331,17 @@ def draw_kaart_hovered(screen, kaart, rect):
     draw_kaart(screen, kaart, hovered_rect)
 
 
-def toon_spel_status(screen, speler, hand, melding=None, melding_timer=0, scroll_offset=0, bovenste_kaart=None):
+def toon_spel_status(screen, speler, hand, melding=None, melding_timer=0, scroll_offset=0, bovenste_kaart=None, gekozen_kleur=None):
     screen.fill(WHITE)
 
     # titel
     font = FONT_TITLE
     text = font.render(f"{speler.capitalize()} is aan de beurt", True, BLACK)
     screen.blit(text, (WIDTH // 2 - text.get_width() // 2, 5))
+
+    # huidige kleur weergeven
+    kleur_text = font.render(f"Huidige kleur: {bovenste_kaart[0].capitalize()}", True, BLACK)
+    screen.blit(kleur_text, (WIDTH // 2 - kleur_text.get_width() // 2, 70))
 
     # bovenste kaart
     if bovenste_kaart is not None:
@@ -356,11 +360,13 @@ def toon_spel_status(screen, speler, hand, melding=None, melding_timer=0, scroll
         kaart = hand[hover_index]
         draw_kaart_hovered(screen, kaart, rect)
     # trek een kaart knop
-    draw_button(screen, WIDTH // 2 - 115, HEIGHT - 260, "Trek een kaart", FONT_BUTTON, GREY, BLACK)
+
+    draw_button(screen, WIDTH // 2 - 400, HEIGHT - 260, "Trek een kaart", FONT_BUTTON, GREY, BLACK)
     
     # eventuele melding
     if melding_timer > 0 and melding is not None:
         melding_font = FONT_BUTTON
+        melding = "dit kaart is niet speelbaar!"
         melding_text = melding_font.render(melding, True, RED)
         screen.blit(melding_text, (WIDTH // 2 - melding_text.get_width() // 2, HEIGHT // 2 - melding_text.get_height() // 2))  
 

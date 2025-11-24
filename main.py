@@ -80,7 +80,7 @@ while True:
                 spacing = 110
 
                 # controleer op klikkenvan trek kaart knop
-                trek_knop_rect = Rect(WIDTH // 2 - 115, HEIGHT - 260, 230, 60)
+                trek_knop_rect = Rect(WIDTH // 2 - 400, HEIGHT - 260, 230, 60)
                 if trek_knop_rect.collidepoint(x, y):
                     if deck:
                         getrokken = deck.pop()
