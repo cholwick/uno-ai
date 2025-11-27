@@ -109,7 +109,118 @@ def start_aflegstapel(deck):
     aflegstapel = [top_kaart]
     return aflegstapel, deck
 
+def ai_beurt(hand, bovenste_kaart, aflegstapel, huidige_kleur, richting, huidige_index, spelers_volgorde, spelers_handen, deck, screen):
+    print("AI is aan de beurt...")
 
+    # Zoek een speelbare kaart
+    speelbare = [k for k in hand if kaart_is_speelbaar(k, bovenste_kaart, huidige_kleur)]
+
+    if speelbare:
+        gekozen = speelbare[0]  # simpelste AI: eerste speelbare kaart
+        print("AI speelt:", gekozen)
+        hand.remove(gekozen)
+        aflegstapel.append(gekozen)
+        richting, huidige_index, huidige_kleur = pas_kaart_effect_toe(
+            screen, gekozen, richting, spelers_volgorde, huidige_index, spelers_handen, deck
+        )
+    else:
+        print("AI trekt een kaart")
+        if deck:
+            getrokken = deck.pop()
+            hand.append(getrokken)
+            print(hand)
+        huidige_index = (huidige_index + richting) % len(spelers_volgorde)
+
+    return richting, huidige_index, huidige_kleur
+
+def speler_beurt(screen, speler, hand, bovenste_kaart, huidige_kleur, richting, huidige_index, spelers_volgorde, scroll_offset, deck):
+    melding = ""
+    melding_timer = 0
+    gekozen = None
+    trok_kaart = False
+    volgende = (huidige_index + richting) % len(spelers_volgorde)
+
+    spacing = 110
+    kaart_breedte = 100
+
+    klok = time.Clock()
+
+    while gekozen is None:
+
+        scroll_offset = scroll_hand(scroll_offset, hand, WIDTH, spacing, kaart_breedte)
+        toon_spel_status(screen, speler, hand, melding, melding_timer, scroll_offset, bovenste_kaart, huidige_kleur)
+
+        for evt in event.get():
+            if evt.type == QUIT:
+                quit(); exit()
+
+            if evt.type == KEYDOWN and evt.key == K_ESCAPE:
+                quit(); exit()
+
+            # Scroll hand
+            if evt.type == MOUSEWHEEL:
+                scroll_offset += evt.y * 25
+
+            # Trek kaart knop
+            if evt.type == MOUSEBUTTONDOWN and evt.button == 1:
+                if Rect(WIDTH//2 - 400, HEIGHT - 260, 230, 60).collidepoint(*evt.pos):
+                    if deck:
+                        hand.append(deck.pop())
+                        gekozen = "getrokken"
+                        trok_kaart = True
+                        return gekozen, trok_kaart, volgende, scroll_offset
+
+            # Kaart spelen
+            if evt.type == MOUSEBUTTONUP and evt.button == 1:
+                # kaart rects berekenen zoals eerder
+                base_x = (WIDTH - (len(hand)*spacing - 10)) // 2
+                for i, kaart in enumerate(hand):
+                    x = base_x + i*spacing + scroll_offset
+                    rect = Rect(x, HEIGHT - 150, 100, 150)
+
+                    if rect.collidepoint(evt.pos):
+                        if kaart_is_speelbaar(kaart, bovenste_kaart, huidige_kleur):
+                            gekozen = kaart
+                        else:
+                            melding = "Die kaart kun jij niet spelen"
+                            melding_timer = FPS * 2
+                        break
+
+        melding_timer -= 1
+        klok.tick(FPS)
+
+    return gekozen, trok_kaart, volgende, scroll_offset
+
+def check_winst(screen, speler, hand):
+    if len(hand) == 1:
+        print(f"{speler} roept UNO!")
+
+    if len(hand) == 0:
+        print(f"{speler} wint!")
+        einde_scherm(screen, speler)
+        return True
+    
+    return False
+
+def restart_game(spelers_namen):
+    deck = deck_aanmaken()
+    spelers_handen, deck = deel_kaarten_uit(deck, spelers_namen)
+    aflegstapel, deck = start_aflegstapel(deck)
+
+    game_state = {
+        "deck": deck,
+        "spelers_handen": spelers_handen,
+        "aflegstapel": aflegstapel,
+        "richting": 1,
+        "huidige_index": 0,
+        "huidige_kleur": aflegstapel[-1][0],
+        "scroll_offset": 0,
+        "melding": "",
+        "melding_timer": 0,
+        "beurt_timer": 0
+    }
+
+    return game_state
 def vraag_speler_profielen(screen, aantal_spelers):
     event.clear()
     namen = [] # reset lijst met namen

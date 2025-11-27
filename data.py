@@ -23,8 +23,3 @@ FONT_BUTTON = font.Font("Comic Sans MS.ttf", 30)
 KLEUREN = ["rood", "geel", "groen", "blauw"]
 WAARDEN = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "skip", "reverse", "+2"]
 SPECIAAL = ["wild", "wild+4"]
-
-TREK_KAARTEN_KNOP_DIMENSIES = {
-    'breedte': 200,
-    'hoogte': 50
-}
