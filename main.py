@@ -1,5 +1,5 @@
 from pygame import *
-from functies import toon_welkom_scherm, deck_aanmaken, vraag_speler_profielen, vraag_aantal_spelers, deel_kaarten_uit, start_aflegstapel, pas_kaart_effect_toe, speler_beurt, ai_beurt, check_winst, restart_game
+from functies import toon_welkom_scherm, deck_aanmaken, vraag_speler_profielen, vraag_aantal_spelers, deel_kaarten_uit, start_aflegstapel, pas_kaart_effect_toe, speler_beurt, ai_beurt, check_winst, begin_of_restart_game
 from data import WIDTH, HEIGHT
 from sys import exit
 
@@ -25,21 +25,7 @@ elif gamemode == "multiplayer":
 
 # ==============================
 
-# ==== spelvoorbereiding ====
-deck = deck_aanmaken()
-spelers_handen, deck = deel_kaarten_uit(deck, spelers_namen)
-aflegstapel, deck = start_aflegstapel(deck)
-
-richting = 1  # 1 voor met de klok mee, -1 voor tegen de klok in
-huidige_index = 0  # index van de huidige speler in spelers_namen
-huidige_kleur = aflegstapel[-1][0]
-spelers_volgorde = spelers_namen.copy()
-scroll_offset = 0
-melding = ""
-melding_timer = 0
-beurt_timer = 0
-spacing = 110
-kaart_breedte = 100
+state = begin_of_restart_game(spelers_namen)
 
 # ==============================
 # Maak één Clock aan voor de loop
@@ -47,39 +33,38 @@ klok = time.Clock()
 
 # Hoofd game loop
 while True:
-
-    speler = spelers_volgorde[huidige_index]
-    hand = spelers_handen[speler]
-    bovenste_kaart = aflegstapel[-1]
+    speler = state['spelers_volgorde'][state['huidige_index']]
+    hand = state['spelers_handen'][speler]
+    bovenste_kaart = state['aflegstapel'][-1]
 
     # AI beurt
     if speler == "AI":
-        richting, huidige_index, huidige_kleur = ai_beurt(
-            hand, bovenste_kaart, aflegstapel, huidige_kleur,
-            richting, huidige_index, spelers_volgorde, spelers_handen, deck, screen
+        state['richting'], state['huidige_index'], state['huidige_kleur'] = ai_beurt(
+            hand, bovenste_kaart, state['aflegstapel'], state['huidige_kleur'],
+            state['richting'], state['huidige_index'], state['spelers_volgorde'], state['spelers_handen'], state['deck'], screen
         )
         if check_winst(screen, speler, hand):
-            restart_game(spelers_namen)
+            state = begin_of_restart_game(spelers_namen)
         continue
 
     # Speler beurt
-    gekozen, trok_kaart, volgende_speler, scroll_offset = speler_beurt(
-        screen, speler, hand, bovenste_kaart, huidige_kleur,
-        richting, huidige_index, spelers_volgorde, scroll_offset, deck
+    gekozen, trok_kaart, volgende_speler, state['scroll_offset'] = speler_beurt(
+        screen, speler, hand, bovenste_kaart, state['huidige_kleur'],
+        state['richting'], state['huidige_index'], state['spelers_volgorde'], state['scroll_offset'], state['deck']
     )
 
     # Trek kaart? -> beurt klaar
     if gekozen == "getrokken":
-        huidige_index = volgende_speler
+        state['huidige_index'] = volgende_speler
         continue
 
     # Speel kaart
     hand.remove(gekozen)
-    aflegstapel.append(gekozen)
-    richting, huidige_index, huidige_kleur = pas_kaart_effect_toe(
-        screen, gekozen, richting, spelers_volgorde ,huidige_index, spelers_handen, deck
+    state['aflegstapel'].append(gekozen)
+    state['richting'], state['huidige_index'], state['huidige_kleur'] = pas_kaart_effect_toe(
+        screen, gekozen, state['richting'], state['spelers_volgorde'], state['huidige_index'], state['spelers_handen'], state['deck']
     )
 
     # Winst?
     if check_winst(screen, speler, hand):
-        restart_game(spelers_namen)
+        state = begin_of_restart_game(spelers_namen)

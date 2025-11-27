@@ -203,25 +203,45 @@ def check_winst(screen, speler, hand):
     
     return False
 
-def restart_game(spelers_namen):
+def begin_of_restart_game(spelers_namen):
+    """
+    Maakt een complete fresh-game-state aan.
+    Wordt gebruikt bij het opstarten én bij herstarten na winst.
+    """
+
+    # Nieuw deck + schudden
     deck = deck_aanmaken()
+
+    # Handen uitdelen
     spelers_handen, deck = deel_kaarten_uit(deck, spelers_namen)
+
+    # Eerste kaart op de aflegstapel
     aflegstapel, deck = start_aflegstapel(deck)
 
-    game_state = {
+    # Bouw game state dictionary
+    state = {
         "deck": deck,
         "spelers_handen": spelers_handen,
         "aflegstapel": aflegstapel,
-        "richting": 1,
+
+        # Spelvolgorde & turn-control
+        "richting": 1,  
         "huidige_index": 0,
+        "spelers_volgorde": spelers_namen.copy(),
+
+        # Huidige speel-kleur (kan later door wild worden aangepast)
         "huidige_kleur": aflegstapel[-1][0],
+
+        # UI / Animatie state
         "scroll_offset": 0,
         "melding": "",
         "melding_timer": 0,
-        "beurt_timer": 0
+        "beurt_timer": 0,
     }
 
-    return game_state
+    return state
+
+
 def vraag_speler_profielen(screen, aantal_spelers):
     event.clear()
     namen = [] # reset lijst met namen
