@@ -1,5 +1,5 @@
 from pygame import *
-from functies import toon_welkom_scherm, deck_aanmaken, vraag_speler_profielen, vraag_aantal_spelers, deel_kaarten_uit, start_aflegstapel, pas_kaart_effect_toe, speler_beurt, ai_beurt, check_winst, begin_of_restart_game
+from functies import toon_welkom_scherm, vraag_speler_profielen, vraag_aantal_spelers, pas_kaart_effect_toe, speler_beurt, ai_beurt, check_winst, begin_of_restart_game
 from data import WIDTH, HEIGHT
 from sys import exit
 

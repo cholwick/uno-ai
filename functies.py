@@ -177,6 +177,8 @@ def speler_beurt(screen, speler, hand, bovenste_kaart, huidige_kleur, richting, 
                 base_x = (WIDTH - (len(hand)*spacing - 10)) // 2
                 for i, kaart in enumerate(hand):
                     x = base_x + i*spacing + scroll_offset
+                    # Clamp x so cards don't go out of bounds
+                    x = max(0, min(x, WIDTH - 100))
                     rect = Rect(x, HEIGHT - 150, 100, 150)
 
                     if rect.collidepoint(evt.pos):
@@ -431,9 +433,12 @@ def kies_kleur(screen, speler=None):
 
 
 def get_kaart_rect(i, hand_length, spacing, scroll_offset, y, card_w, card_h, screen_width):
-
     base_x = (screen_width - (hand_length * spacing - 10)) // 2
     x = base_x + i * spacing + scroll_offset
+    
+    # Clamp x so cards don't go too far right or left
+    x = max(0, min(x, screen_width - card_w))
+    
     return Rect(x, y, card_w, card_h)
 
 def detect_hover(spacing, hand, scroll_offset, y_kaart, kaart_breedte, kaart_hoogte, screen_width):
@@ -547,15 +552,16 @@ def draw_button(screen, x, y, text, font, bg_color, text_color):
 
 def scroll_hand(scroll_offset, hand, width, spacing, kaart_breedte):
     # totale breedte
-    totale_breedte = len(hand) * spacing -10
+    totale_breedte = len(hand) * spacing - 10
     max_offset = max(0, totale_breedte - width + kaart_breedte)
 
     key_pressed = key.get_pressed()
-    if key_pressed[K_LEFT] :
-        scroll_offset += 10
+    if key_pressed[K_LEFT]:
+        scroll_offset -= 10  # scroll links (kaarten naar rechts)
     elif key_pressed[K_RIGHT]:
-        scroll_offset -= 10
+        scroll_offset += 10  # scroll rechts (kaarten naar links)
 
+    # clamp: tussen -max_offset en 0
     if scroll_offset > 0:
         scroll_offset = 0
     elif scroll_offset < -max_offset:
