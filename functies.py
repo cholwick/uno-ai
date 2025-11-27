@@ -6,14 +6,19 @@ from confetti import Confetti
 
 # game of uno
 # give the functions to main.py
+                
 def toon_welkom_scherm(screen):
     title_text = FONT_TITLE.render("Welkom bij UNO!", True, RED)
-    start_text = FONT_BUTTON.render("Druk op een toets om te starten", True, GREEN)
+    
+    singleplayer_text = FONT_TITLE.render("1. Singleplayer", True, BLACK)
+    multiplayer_text = FONT_TITLE.render("2. Multiplayer", True, BLACK)
 
     while True:
         screen.fill(WHITE)
         screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 3))
-        screen.blit(start_text, (WIDTH // 2 - start_text.get_width() // 2, HEIGHT // 2))
+        screen.blit(singleplayer_text, (WIDTH // 2 - singleplayer_text.get_width() // 2, HEIGHT // 2))
+        screen.blit(multiplayer_text, (WIDTH // 2 - multiplayer_text.get_width() // 2, HEIGHT // 2 + 60))
+
         display.flip()
 
         for evt in event.get():
@@ -23,8 +28,10 @@ def toon_welkom_scherm(screen):
                 if evt.key == K_ESCAPE:
                     quit()
                     exit()
-                else:
-                    return    
+                elif evt.key == K_1:
+                    return "singleplayer"
+                elif evt.key == K_2:
+                    return "multiplayer"  
 
 
 def einde_scherm(screen, winnaar):
@@ -219,12 +226,16 @@ def pas_kaart_effect_toe(screen, kaart, richting, speler, index, spelers_handen,
     #kleurkeuze
     nieuwe_kleur = kaart[0]
     if effect.get("kleur_kiezen"):
-        nieuwe_kleur = kies_kleur(screen)
+        nieuwe_kleur = kies_kleur(screen, speler[index])
 
     return richting, volgende, nieuwe_kleur
 
 
-def kies_kleur(screen):
+def kies_kleur(screen, speler=None):
+    """
+    Laat de speler een kleur kiezen,
+    of kies automatisch voor AI.
+    """
     kleuren = [
         ("rood", RED),
         ("geel", YELLOW),
@@ -232,62 +243,60 @@ def kies_kleur(screen):
         ("blauw", BLUE)
     ]
 
-    gekozen_kleur = None
-    font_titel = FONT_TITLE
-    font_knop = FONT_BUTTON
-    klok = time.Clock()  # frame limiter
+    # ------------------------------------------------------------
+    # AI kiest direct een kleur (random of slim later)
+    # ------------------------------------------------------------
+    if speler == "ai" or speler == "AI":
+        gekozen_kleur = choice(["rood", "geel", "groen", "blauw"])
+        print("AI kiest kleur:", gekozen_kleur)
+        return gekozen_kleur
+    # ------------------------------------------------------------
+    else:
+        gekozen_kleur = None
+        font_titel = FONT_TITLE
+        font_knop = FONT_BUTTON
+        klok = time.Clock()
 
-    while gekozen_kleur is None:
-        # achtergrond
-        screen.fill(WHITE)
-        
+        while gekozen_kleur is None:
+            screen.fill(WHITE)
 
-        titel = font_titel.render("Kies een kleur:", True, BLACK)
-        screen.blit(titel, (WIDTH // 2 - titel.get_width() // 2, HEIGHT // 5))
+            titel = font_titel.render("Kies een kleur:", True, BLACK)
+            screen.blit(titel, (WIDTH // 2 - titel.get_width() // 2, HEIGHT // 5))
 
-        # muispositie
-        muis_pos = mouse.get_pos()
+            muis_pos = mouse.get_pos()
+            knop_breedte = 150
+            knop_hoogte = 100
+            ruimte = 40
+            start_x = WIDTH // 2 - (knop_breedte * 4 + ruimte * 3) // 2
+            y_pos = HEIGHT // 2
 
-        # knoppen tekenen
-        knop_breedte = 150
-        knop_hoogte = 100
-        ruimte = 40
-        start_x = WIDTH // 2 - (knop_breedte * len(kleuren) + ruimte * (len(kleuren) - 1)) // 2
-        y_pos = HEIGHT // 2
+            for i, (kleur_naam, kleur_rgb) in enumerate(kleuren):
+                rect = Rect(start_x + i * (knop_breedte + ruimte), y_pos, knop_breedte, knop_hoogte)
 
-        for i, (kleur_naam, kleur_rgb) in enumerate(kleuren):
-            rect = Rect(start_x + i * (knop_breedte + ruimte), y_pos, knop_breedte, knop_hoogte)
+                if rect.collidepoint(muis_pos):
+                    draw.rect(screen, kleur_rgb, rect.inflate(10, 10), border_radius=12)
+                else:
+                    draw.rect(screen, kleur_rgb, rect, border_radius=12)
 
-            if rect.collidepoint(muis_pos):
-                draw.rect(screen, kleur_rgb, rect.inflate(10, 10), border_radius=12)
-            else:
-                draw.rect(screen, kleur_rgb, rect, border_radius=12)
+                tekst = font_knop.render(kleur_naam.capitalize(), True, BLACK)
+                screen.blit(tekst, (rect.centerx - tekst.get_width() // 2,
+                                    rect.centery - tekst.get_height() // 2))
 
-            tekst = font_knop.render(kleur_naam.capitalize(), True, BLACK)
-            screen.blit(tekst, (rect.centerx - tekst.get_width() // 2, rect.centery - tekst.get_height() // 2))
-
-        
-
-        # events afhandelen
-        for evt in event.get():
-            if evt.type == QUIT:
-                exit()
-                raise SystemExit
-            if evt.type == KEYDOWN:
-                if evt.key == K_ESCAPE:
-                    quit()
+            for evt in event.get():
+                if evt.type == QUIT:
                     exit()
-            elif evt.type == MOUSEBUTTONDOWN and evt.button == 1:
-                for i, (kleur_naam, kleur_rgb) in enumerate(kleuren):
-                    rect = Rect(start_x + i * (knop_breedte + ruimte), y_pos, knop_breedte, knop_hoogte)
-                    if rect.collidepoint(evt.pos):
-                        gekozen_kleur = kleur_naam
-                        
-        display.flip()
 
-        klok.tick(30)  # 30 FPS om CPU te sparen
+                elif evt.type == MOUSEBUTTONDOWN and evt.button == 1:
+                    for i, (kleur_naam, kleur_rgb) in enumerate(kleuren):
+                        rect = Rect(start_x + i * (knop_breedte + ruimte), y_pos, knop_breedte, knop_hoogte)
+                        if rect.collidepoint(evt.pos):
+                            gekozen_kleur = kleur_naam
 
-    return gekozen_kleur
+            display.flip()
+            klok.tick(30)
+
+        return gekozen_kleur
+
 
 def get_kaart_rect(i, hand_length, spacing, scroll_offset, y, card_w, card_h, screen_width):
 
@@ -385,7 +394,7 @@ def toon_spel_status(screen, speler, hand, melding=None, melding_timer=0, scroll
         melding_font = FONT_BUTTON
         melding = "dit kaart is niet speelbaar!"
         melding_text = melding_font.render(melding, True, RED)
-        screen.blit(melding_text, (WIDTH // 2 - melding_text.get_width() // 2, HEIGHT // 2 - melding_text.get_height() // 2))  
+        screen.blit(melding_text, (WIDTH // 2 - melding_text.get_width() // 2, HEIGHT // 2 - melding_text.get_height() // 2 - 150))  
 
     # altijd aan het einde!!!!!
     display.flip()

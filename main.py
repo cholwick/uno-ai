@@ -4,20 +4,24 @@ from data import WIDTH, HEIGHT, FPS, WHITE, BLACK, FONT_TITLE, FONT_BUTTON
 from sys import exit
 
 init()
-screen = display.set_mode((WIDTH, HEIGHT),flags = SCALED| FULLSCREEN)
+screen = display.set_mode((WIDTH, HEIGHT),flags = SCALED| HWSURFACE|DOUBLEBUF)
 display.set_caption("UNO Spel")
 print("Screen ID:", id(screen))
 
 # ==== welkom + spelers setup ====
 #welkom scherm tonen
-toon_welkom_scherm(screen)
+gamemode = toon_welkom_scherm(screen)
 event.clear()
-# --- Vraag aantal spelers ---
-aantal_spelers = vraag_aantal_spelers(screen)   
-print("Aantal spelers gekozen:", aantal_spelers)
-# --- Vraag namen van spelers ---
-spelers_namen = vraag_speler_profielen(screen, aantal_spelers)  
-print("Spelers:", spelers_namen)
+if gamemode == "singleplayer":
+    spelers_namen = ["Jij", "AI"]
+    # Voeg hier singleplayer logica toe indien nodig
+elif gamemode == "multiplayer":
+    # --- Vraag aantal spelers ---
+    aantal_spelers = vraag_aantal_spelers(screen)   
+    print("Aantal spelers gekozen:", aantal_spelers)
+    # --- Vraag namen van spelers ---
+    spelers_namen = vraag_speler_profielen(screen, aantal_spelers)  
+    print("Spelers:", spelers_namen)
 
 # ==============================
 
@@ -45,8 +49,36 @@ klok = time.Clock()
 while True:
     speler = spelers_volgorde[huidige_index]
     hand = spelers_handen[speler]
+    print("Huidige speler:", speler)
     print(hand)
     bovenste_kaart = aflegstapel[-1]
+
+    # AI beurt
+    if speler == "AI":
+        print("AI is aan de beurt...")
+
+        # Zoek een speelbare kaart
+        speelbare = [k for k in hand if kaart_is_speelbaar(k, bovenste_kaart, huidige_kleur)]
+
+        if speelbare:
+            gekozen = speelbare[0]  # simpelste AI: eerste speelbare kaart
+            print("AI speelt:", gekozen)
+            hand.remove(gekozen)
+            aflegstapel.append(gekozen)
+            richting, huidige_index, huidige_kleur = pas_kaart_effect_toe(
+                screen, gekozen, richting, spelers_volgorde, huidige_index, spelers_handen, deck
+            )
+        else:
+            print("AI trekt een kaart")
+            if deck:
+                getrokken = deck.pop()
+                hand.append(getrokken)
+                print(hand)
+            huidige_index = (huidige_index + richting) % len(spelers_volgorde)
+
+        continue   # sla de hele speler-input over
+    # Speler beurt
+
     gekozen = None  # reset gekozen kaart voor deze beurt
     # sentinel to mark that the player drew a card and the turn should end
     trok_kaart = False
@@ -154,14 +186,20 @@ while True:
         print(f"{speler} heeft gewonnen!")
         einde_scherm(screen, speler) # optioneel: toon einde scherm
 
-        toon_welkom_scherm(screen)
+        # ==== welkom + spelers setup ====
+        #welkom scherm tonen
+        gamemode = toon_welkom_scherm(screen)
         event.clear()
-        # --- Vraag aantal spelers ---
-        aantal_spelers = vraag_aantal_spelers(screen)   
-        print("Aantal spelers gekozen:", aantal_spelers)
-        # --- Vraag namen van spelers ---
-        spelers_namen = vraag_speler_profielen(screen, aantal_spelers)  
-        print("Spelers:", spelers_namen)
+        if gamemode == "singleplayer":
+            spelers_namen = ["Jij", "AI"]
+            # Voeg hier singleplayer logica toe indien nodig
+        elif gamemode == "multiplayer":
+            # --- Vraag aantal spelers ---
+            aantal_spelers = vraag_aantal_spelers(screen)   
+            print("Aantal spelers gekozen:", aantal_spelers)
+            # --- Vraag namen van spelers ---
+            spelers_namen = vraag_speler_profielen(screen, aantal_spelers)  
+            print("Spelers:", spelers_namen)
 
         # ==============================
 
@@ -178,6 +216,8 @@ while True:
         melding = ""
         melding_timer = 0
         beurt_timer = 0
+        spacing = 110
+        kaart_breedte = 100
 
 
 
