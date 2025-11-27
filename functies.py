@@ -134,6 +134,7 @@ def ai_beurt(hand, bovenste_kaart, aflegstapel, huidige_kleur, richting, huidige
     return richting, huidige_index, huidige_kleur
 
 def speler_beurt(screen, speler, hand, bovenste_kaart, huidige_kleur, richting, huidige_index, spelers_volgorde, scroll_offset, deck):
+    print(f"{speler} bent/is aan de beurt.")
     melding = ""
     melding_timer = 0
     gekozen = None

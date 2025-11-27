@@ -1,6 +1,6 @@
 from pygame import *
-from functies import toon_welkom_scherm,einde_scherm, deck_aanmaken, vraag_speler_profielen, vraag_aantal_spelers, deel_kaarten_uit, start_aflegstapel, pas_kaart_effect_toe, speler_beurt, ai_beurt, check_winst, restart_game
-from data import WIDTH, HEIGHT, FPS, WHITE, BLACK, FONT_TITLE, FONT_BUTTON
+from functies import toon_welkom_scherm, deck_aanmaken, vraag_speler_profielen, vraag_aantal_spelers, deel_kaarten_uit, start_aflegstapel, pas_kaart_effect_toe, speler_beurt, ai_beurt, check_winst, restart_game
+from data import WIDTH, HEIGHT
 from sys import exit
 
 init()
@@ -83,4 +83,3 @@ while True:
     # Winst?
     if check_winst(screen, speler, hand):
         restart_game(spelers_namen)
-    continue
