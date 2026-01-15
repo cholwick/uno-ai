@@ -21,17 +21,9 @@ def toon_welkom_scherm(screen):
 
         display.flip()
 
-        for evt in event.get():
-            if evt.type == QUIT:
-                exit()
-            if evt.type == KEYDOWN:
-                if evt.key == K_ESCAPE:
-                    quit()
-                    exit()
-                elif evt.key == K_1:
-                    return "singleplayer"
-                elif evt.key == K_2:
-                    return "multiplayer"  
+        gamemode = handle_exit_events()
+        if gamemode in ["singleplayer", "multiplayer"]:
+            return gamemode
 
 
 def einde_scherm(screen, winnaar):
@@ -39,7 +31,7 @@ def einde_scherm(screen, winnaar):
     confettis_timer = 0
     
     winner_text = FONT_TITLE.render(f"{winnaar.capitalize()} wint!", True, RED)
-    klik_esc_text = FONT_BUTTON.render("klik esc", True, BLACK)
+    klik_esc_text = FONT_BUTTON.render("klik esc om te restart.", True, BLACK)
 
     active = True
 
@@ -66,9 +58,8 @@ def einde_scherm(screen, winnaar):
             if evt.type == QUIT:
                 quit()
                 exit()
-            if evt.type == KEYDOWN:
-                if evt.key == K_ESCAPE:
-                    active = False
+            if evt.type == KEYDOWN and evt.key == K_ESCAPE:
+                active = False
         
         display.flip()
 
@@ -103,11 +94,12 @@ def deel_kaarten_uit(deck, spelers_namen):
 
 def start_aflegstapel(deck):
     top_kaart = deck.pop()
-    while top_kaart[0] == "zwart":  
+    while top_kaart[0] == "zwart" or top_kaart[1] in ["skip", "reverse", "+2", "wild+4"]:  
         deck.insert(0, top_kaart)  # terugleggen onderaan de stapel
         top_kaart = deck.pop()
     aflegstapel = [top_kaart]
     return aflegstapel, deck
+
 
 def ai_beurt(hand, bovenste_kaart, aflegstapel, huidige_kleur, richting, huidige_index, spelers_volgorde, spelers_handen, deck, screen):
     print("AI is aan de beurt...")
@@ -132,6 +124,7 @@ def ai_beurt(hand, bovenste_kaart, aflegstapel, huidige_kleur, richting, huidige
         huidige_index = (huidige_index + richting) % len(spelers_volgorde)
 
     return richting, huidige_index, huidige_kleur
+
 
 def speler_beurt(screen, speler, hand, bovenste_kaart, huidige_kleur, richting, huidige_index, spelers_volgorde, scroll_offset, deck):
     print(f"{speler} bent/is aan de beurt.")
@@ -184,6 +177,7 @@ def speler_beurt(screen, speler, hand, bovenste_kaart, huidige_kleur, richting, 
                     if rect.collidepoint(evt.pos):
                         if kaart_is_speelbaar(kaart, bovenste_kaart, huidige_kleur):
                             gekozen = kaart
+                            print(f"{speler} speelt:", gekozen)
                         else:
                             melding = "Die kaart kun jij niet spelen"
                             melding_timer = FPS * 2
@@ -193,6 +187,7 @@ def speler_beurt(screen, speler, hand, bovenste_kaart, huidige_kleur, richting, 
         klok.tick(FPS)
 
     return gekozen, trok_kaart, volgende, scroll_offset
+
 
 def check_winst(screen, speler, hand):
     if len(hand) == 1:
@@ -204,6 +199,7 @@ def check_winst(screen, speler, hand):
         return True
     
     return False
+
 
 def begin_of_restart_game(spelers_namen):
     """
@@ -321,6 +317,7 @@ def kaart_is_speelbaar(kaart, bovenste_kaart, huidige_kleur):
             kleur == "zwart"
             )
 
+
 def Bepaal_effect(kaart, spelers_aantal):
     kleur , waarde = kaart
 
@@ -336,6 +333,7 @@ def Bepaal_effect(kaart, spelers_aantal):
         return {"kleur_kiezen":True}
     
     return {}
+
 
 def voer_effect_uit(effect, deck, spelers_handen, slachtoffer):
     if "kaarten_trekken" in effect:
@@ -441,6 +439,7 @@ def get_kaart_rect(i, hand_length, spacing, scroll_offset, y, card_w, card_h, sc
     
     return Rect(x, y, card_w, card_h)
 
+
 def detect_hover(spacing, hand, scroll_offset, y_kaart, kaart_breedte, kaart_hoogte, screen_width):
     muis_pos = mouse.get_pos()
     for i in range(len(hand)):
@@ -448,6 +447,7 @@ def detect_hover(spacing, hand, scroll_offset, y_kaart, kaart_breedte, kaart_hoo
         if kaart_rect.collidepoint(muis_pos):
             return i
     return None
+
 
 def draw_kaart(screen, kaart, rect, huidige_kleur=None):
     kleur, waarde = kaart
@@ -486,6 +486,7 @@ def draw_kaart(screen, kaart, rect, huidige_kleur=None):
     img = transform.scale(img, (rect.width, rect.height))
     screen.blit(img, (rect.x, rect.y))
 
+
 def draw_kaart_hovered(screen, kaart, rect):
     scale = 1.25
     new_w = int(rect.width * scale)
@@ -503,7 +504,7 @@ def toon_spel_status(screen, speler, hand, melding=None, melding_timer=0, scroll
 
     # titel
     font = FONT_TITLE
-    text = font.render(f"{speler.capitalize()} is aan de beurt", True, BLACK)
+    text = font.render(f"{speler.capitalize()} bent/is aan de beurt", True, BLACK)
     screen.blit(text, (WIDTH // 2 - text.get_width() // 2, 5))
 
     # bovenste kaart
@@ -550,6 +551,7 @@ def draw_button(screen, x, y, text, font, bg_color, text_color):
     # screen.blit(kaart_text, (text_x, text_y))
     # ==============================================================================
 
+
 def scroll_hand(scroll_offset, hand, width, spacing, kaart_breedte):
     # totale breedte
     totale_breedte = len(hand) * spacing - 10
@@ -568,3 +570,43 @@ def scroll_hand(scroll_offset, hand, width, spacing, kaart_breedte):
         scroll_offset = -max_offset
 
     return scroll_offset
+
+
+def handle_exit_events():
+    """
+    Handle common global events.
+
+    Returns:
+    - "singleplayer" or "multiplayer" when the user pressed 1/2 on the keyboard
+    - "escape" or "quit" if the user requested exit (useful for callers that
+      want to handle the exit themselves)
+    - None when no relevant event occurred
+    """
+    for evt in event.get():
+        if evt.type == QUIT:
+            return "quit"
+
+        if evt.type == KEYDOWN:
+            if evt.key == K_ESCAPE:
+                return "escape"
+            if evt.key == K_1:
+                return "singleplayer"
+            if evt.key == K_2:
+                return "multiplayer"
+
+    return None
+
+        
+def centre_x(text_surface):
+    """
+    Return the x coordinate needed to horizontally center a surface or width.
+
+    Accepts either a surface-like object with `.get_width()` or an integer width.
+    """
+    # accept either a surface (has get_width) or a raw width (int)
+    try:
+        w = text_surface.get_width()
+    except Exception:
+        w = int(text_surface)
+
+    return WIDTH // 2 - w // 2
